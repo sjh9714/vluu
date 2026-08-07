@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { PHOTO_LIST, ROUTE_LIST } from '../../src/lib/photos'
 
-test('홈이 뜨고 워드마크와 셀렉 수를 보여준다', async ({ page }) => {
+test('홈이 뜨고 콘텐츠 레이어의 실제 수치를 보여준다', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1, name: 'VLUU' })).toBeVisible()
-  await expect(page.getByText('Selected')).toBeVisible()
+  // 문구가 아니라 수치를 본다 — 파이프라인이 앱까지 이어졌는지가 확인하려는 것이다.
+  await expect(page.getByText(`Frames ${PHOTO_LIST.length}`)).toBeVisible()
+  await expect(page.getByText(`Routes ${ROUTE_LIST.length}`)).toBeVisible()
 })
 
 test('바닥은 순백이다 — 화이트 큐브', async ({ page }) => {

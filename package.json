@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "ingest": "tsx scripts/ingest.ts",
+    "verify:media": "tsx scripts/verify-media.ts"
   },
   "dependencies": {
     "next": "16.3.0",
@@ -29,6 +31,9 @@
     "@types/react-dom": "19.2.4",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.0",
+    "exifr": "7.1.3",
+    "sharp": "0.35.3",
+    "tsx": "4.23.9",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
   }

@@ -5,3 +5,6 @@
 allowBuilds:
   unrs-resolver: true # eslint-import-resolver-typescript의 네이티브 리졸버
   sharp: true # 이미지 파이프라인 (Phase 1)
+  esbuild: true # tsx가 ingest 스크립트를 실행할 때 쓴다
+minimumReleaseAgeExclude:
+  - tsx@4.23.9
