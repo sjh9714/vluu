@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { PHOTO_LIST, ROUTE_LIST } from '@/lib/photos'
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:4321'
+import { siteUrl } from '@/lib/site-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const BASE = siteUrl()
+
   return [
     { url: BASE, priority: 1 },
     { url: `${BASE}/colophon`, priority: 0.5 },

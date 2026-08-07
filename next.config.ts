@@ -10,6 +10,25 @@ const nextConfig: NextConfig = {
   // Next 16은 이걸 교차 출처로 보고 _next 청크를 403으로 막아 하이드레이션이 통째로 죽는다.
   // SSR된 화면은 멀쩡해 보여서 알아채기 어렵다.
   allowedDevOrigins: ['127.0.0.1'],
+  /*
+   * public/ 의 기본 헤더는 `max-age=0, must-revalidate`다. 사진 파생물 71MB를
+   * 매번 재검증하게 둘 이유가 없다.
+   *
+   * 엣지는 1년으로 길게 잡는다 — 새 배포가 CDN을 무효화하므로 낡은 바이트가 남지 않는다.
+   * 브라우저는 하루만 준다. 브라우저 캐시는 배포로 지워지지 않고, 파일 이름에 내용 해시가
+   * 없어서 `pnpm ingest --force`로 다시 구우면 **같은 주소에 다른 바이트**가 온다.
+   * 같은 이유로 immutable은 쓰지 않는다.
+   */
+  async headers() {
+    return [
+      {
+        source: '/media/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=31536000' },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig

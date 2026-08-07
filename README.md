@@ -62,12 +62,19 @@ public/media/        구워진 파생물 (커밋됨)
 
 ## 배포
 
-Vercel 기준. 빌드 설정은 기본값 그대로면 되고, 환경변수는 하나뿐이다.
+Vercel 기준. 빌드 설정은 기본값 그대로면 되고, **환경변수는 없어도 된다.**
+
+절대 주소(사이트맵·OG 메타데이터)는 이 순서로 정해진다 — `src/lib/site-url.ts`.
 
 ```
-NEXT_PUBLIC_SITE_URL=https://<배포 도메인>
+NEXT_PUBLIC_SITE_URL  →  VERCEL_PROJECT_PRODUCTION_URL  →  http://localhost:4321
 ```
 
-사이트맵과 OG 메타데이터의 절대 주소에 쓰인다. 없으면 `http://localhost:4321`로 떨어진다.
+가운데 값은 Vercel이 빌드 때 알아서 넣어준다. 그래서 아무것도 설정하지 않아도 배포본이
+localhost를 가리키지는 않는다. **커스텀 도메인을 붙일 때만** `NEXT_PUBLIC_SITE_URL`을 넣는다 —
+Vercel이 주는 값은 `*.vercel.app`이지 내 도메인이 아니다.
 
 CMS도 이미지 서비스도 붙어 있지 않다. 사진은 레포 안의 정적 파일이고 모든 라우트가 프리렌더된다.
+
+`/media/*`에는 `max-age=86400, s-maxage=31536000`을 준다. `immutable`은 일부러 뺐다 —
+파일 이름에 내용 해시가 없어서 `ingest --force`로 다시 구우면 같은 주소에 다른 바이트가 온다.

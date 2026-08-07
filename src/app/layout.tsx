@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next'
 import { display, mono } from '@/styles/fonts'
+import { siteUrl } from '@/lib/site-url'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
   title: { default: 'VLUU', template: '%s — VLUU' },
   description:
     'A photographic index of transit edges, civic geometry, and the light between them.',
-  // 폴백 포트는 이 프로젝트의 dev 포트와 같아야 한다. robots·sitemap도 같은 값을 본다.
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:4321'),
+  metadataBase: new URL(siteUrl()),
 }
 
 export const viewport: Viewport = {
