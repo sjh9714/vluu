@@ -1,0 +1,49 @@
+/*
+ * 화이트 큐브 안의 슬라이더. 기본 위젯은 OS 색을 그대로 들고 오므로
+ * "화면에서 유일하게 채도를 갖는 것은 사진"이라는 규칙이 깨진다.
+ *
+ * 전역 CSS 파일이다 — 셰이더 놀이터와 파이프라인 사다리가 같은 모양이어야 하고,
+ * 두 모듈이 각자 복사해 두면 한쪽만 고치고 지나가게 된다.
+ */
+.vluu-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vluu-range::-webkit-slider-runnable-track {
+  height: var(--rule-w);
+  background: var(--rule-strong);
+}
+
+.vluu-range::-moz-range-track {
+  height: var(--rule-w);
+  background: var(--rule-strong);
+}
+
+.vluu-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 2px;
+  height: 18px;
+  margin-top: -9px;
+  background: var(--ink);
+  border: none;
+  border-radius: 0;
+}
+
+.vluu-range::-moz-range-thumb {
+  width: 2px;
+  height: 18px;
+  background: var(--ink);
+  border: none;
+  border-radius: 0;
+}
+
+.vluu-range:focus-visible {
+  outline: var(--focus-w) solid var(--focus);
+  outline-offset: var(--focus-gap);
+}

@@ -1,8 +1,11 @@
 import type { Metadata } from 'next'
 import { readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
+import type { Photo } from '#content/types'
+import { PipelineLadder, type Rung } from '@/components/pipeline-ladder'
+import { ShaderPlayground } from '@/components/shader-playground'
 import { SiteHeader } from '@/components/site-header'
-import { PHOTO_LIST, ROUTE_LIST } from '@/lib/photos'
+import { PHOTO_LIST, ROUTE_LIST, getPhoto } from '@/lib/photos'
 import styles from './colophon.module.css'
 
 export const metadata: Metadata = {
@@ -32,6 +35,24 @@ async function measure() {
   return { rows, bytes }
 }
 
+/** 한 장이 실제로 어떤 사다리로 구워졌는지. 파일을 직접 재서 넘긴다. */
+async function ladder(photo: Photo): Promise<Rung[]> {
+  const dir = path.join(process.cwd(), 'public', 'media', photo.key)
+  const size = async (file: string) =>
+    stat(path.join(dir, file)).then(
+      (s) => s.size,
+      () => null,
+    )
+
+  const rungs: Rung[] = []
+  for (const width of photo.widths) {
+    const avif = await size(`${width}.avif`)
+    if (avif === null) continue
+    rungs.push({ width, avif, webp: await size(`${width}.webp`) })
+  }
+  return rungs
+}
+
 const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`
 
 /**
@@ -48,6 +69,13 @@ const MEASUREMENTS = [
 
 export default async function ColophonPage() {
   const media = await measure()
+
+  /*
+   * 데모용 사진. 대각선과 색이 뚜렷해야 왜곡과 번짐이 눈에 보인다 —
+   * 하늘만 있는 사진에서는 무엇을 만져도 아무 일도 없어 보인다.
+   */
+  const demo = getPhoto('handrail-shadow') ?? PHOTO_LIST[0]
+  const rungs = demo ? await ladder(demo) : []
 
   const live = PHOTO_LIST.filter((p) => p.live).length
   const pixels = PHOTO_LIST.reduce((sum, p) => sum + p.width * p.height, 0)
@@ -282,6 +310,26 @@ export default async function ColophonPage() {
             with a trackpad. Vertical wheel is translated to sideways travel — and released again at
             either end, because eating events you cannot act on makes a page feel stuck.
           </p>
+        </section>
+
+        <section className={styles.wide}>
+          <h2>Drive it yourself</h2>
+          <p>
+            The same shader, compiled from the same source the site uses. Push the velocity and watch
+            the frame shear, bend at the edges, split its channels by about a pixel, and drag along its
+            own direction of travel.
+          </p>
+          {demo ? <ShaderPlayground photo={demo} /> : null}
+        </section>
+
+        <section className={styles.wide}>
+          <h2>What one photograph weighs</h2>
+          <p>
+            Every frame is baked into a ladder of widths at build time. Move the slider and the browser
+            fetches that exact file — no <code>srcset</code>, no guessing, just the bytes that would go
+            over the wire.
+          </p>
+          {demo && rungs.length > 0 ? <PipelineLadder photo={demo} rungs={rungs} /> : null}
         </section>
 
         <section className={styles.section}>
