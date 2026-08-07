@@ -40,10 +40,10 @@ const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`
  */
 const MEASURED_ON = '7 August 2026'
 const MEASUREMENTS = [
-  { route: '/', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
-  { route: '/c/*', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
-  { route: '/p/*', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
-  { route: '/colophon', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', cls: '0' },
+  { route: '/', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.9s', tbt: '0ms' },
+  { route: '/c/*', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', tbt: '80ms' },
+  { route: '/p/*', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', tbt: '0ms' },
+  { route: '/colophon', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', tbt: '0ms' },
 ] as const
 
 export default async function ColophonPage() {
@@ -177,9 +177,10 @@ export default async function ColophonPage() {
         <section className={styles.section}>
           <h2>Measured</h2>
           <p>
-            Lighthouse, desktop preset, production build, {MEASURED_ON}. These are a snapshot rather
-            than a promise — the useful part is the shape of them: nothing blocks, nothing shifts, and
-            the largest image on screen arrives in well under a second.
+            Lighthouse, desktop preset, production build, WebGL layer active, {MEASURED_ON}. Cumulative
+            layout shift is 0 everywhere. These are a snapshot rather than a promise — the useful part
+            is the shape of them: nothing blocks, nothing shifts, and the largest image arrives in well
+            under a second.
           </p>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -191,7 +192,7 @@ export default async function ColophonPage() {
                   <th>Best</th>
                   <th>SEO</th>
                   <th>LCP</th>
-                  <th>CLS</th>
+                  <th>TBT</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,7 +204,7 @@ export default async function ColophonPage() {
                     <td>{row.bestPractices}</td>
                     <td>{row.seo}</td>
                     <td>{row.lcp}</td>
-                    <td>{row.cls}</td>
+                    <td>{row.tbt}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,19 +215,41 @@ export default async function ColophonPage() {
             2.5:1 against white — quiet to look at, and below the 4.5:1 that makes text readable. The
             palette now has three steps and all of them clear it.
           </p>
+          <p>
+            One caveat worth stating, since measurement is easy to fake by choosing the right machine:
+            run the same build under a software rasteriser and performance falls to the seventies.
+            Script evaluation nearly triples, because the CPU is doing the GPU&rsquo;s job and
+            everything else queues behind it. That number says something about the harness, not about
+            the page — but a colophon that only prints the flattering run is not measurement, it is
+            marketing.
+          </p>
         </section>
 
         <section className={styles.section}>
           <h2>DOM first, canvas second</h2>
           <p>
-            Every photograph on this site is a real <code>&lt;img&gt;</code> in a box with a fixed
-            aspect ratio. Layout, reading order, alt text and cumulative layout shift are settled
-            before any of the motion work begins. The WebGL layer that follows reads those elements&rsquo;
-            positions and draws over them; when it fails, is switched off, or the reader has asked for
-            reduced motion, the canvas simply stops and the page underneath is already correct.
+            Every photograph here is a real <code>&lt;img&gt;</code> in a box with a fixed aspect ratio.
+            Layout, reading order, alt text and layout shift are settled before any motion work begins.
+            A single WebGL canvas then reads those elements&rsquo; positions each frame and draws planes
+            in exactly the same place, distorted by how fast you are scrolling.
           </p>
           <p>
-            <strong>The fallback is not a degraded version. It is the site, with a layer removed.</strong>
+            It also takes its pixels from the DOM. The <code>&lt;img&gt;</code> has already chosen a
+            width from its <code>srcset</code> and downloaded it, so that element becomes the texture —
+            no second request, and no guessing at a size the browser had already worked out. The upshot
+            is that the canvas ships <strong>zero photo data</strong> to the client.
+          </p>
+          <p>
+            The handover happens one photograph at a time. A single global switch would hide every
+            <code>&lt;img&gt;</code> the moment the canvas woke up, including the ones it could not draw
+            yet — holes in the page for as long as the textures took. Instead each frame is handed over
+            only once its texture is ready, and handed straight back if the context is lost.
+          </p>
+          <p>
+            <strong>The fallback is not a degraded version. It is the site, with a layer removed.</strong>{' '}
+            No WebGL, reduced motion, data saver, two cores, a small maximum texture size, a thrown
+            exception, a lost context — each of those is a normal outcome, and each one lands on a page
+            that was already finished.
           </p>
         </section>
 

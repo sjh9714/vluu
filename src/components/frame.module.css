@@ -26,8 +26,12 @@
   transition: opacity var(--t-base) var(--ease);
 }
 
-/* 캔버스가 그리는 동안에는 DOM 이미지를 숨긴다. GL이 죽으면 이 속성이 사라지고 그대로 보인다. */
-:global([data-gl='on']) .image {
+/*
+ * 캔버스가 이 사진을 실제로 그릴 수 있게 된 순간에만 DOM 이미지를 숨긴다.
+ * 전역 스위치 하나로 전부 숨기면 GL이 아직 못 그린 사진까지 사라져 구멍이 난다.
+ * GL이 멈추거나 죽으면 이 속성이 사라지고 원래 이미지가 그대로 돌아온다.
+ */
+:global([data-gl-ready]) .image {
   opacity: 0;
 }
 

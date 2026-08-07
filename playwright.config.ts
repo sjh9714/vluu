@@ -13,7 +13,19 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL, trace: 'on-first-retry' },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        // 헤드리스 Chromium은 기본적으로 WebGL이 없다. 소프트웨어 래스터라이저를 붙여야
+        // GL 레이어가 실제로 켜지는 경로를 검사할 수 있다. 느리지만 정확하다.
+        launchOptions: {
+          args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+        },
+      },
+    },
+    // 헤드리스 WebKit에는 쓸 만한 WebGL이 없다. 그래서 이 프로젝트는 폴백 경로를 검사한다 —
+    // GL이 없는 환경에서 사이트가 온전한지가 여기서 확인된다.
     { name: 'mobile', use: { ...devices['iPhone 15 Pro'] } },
   ],
   webServer: {
