@@ -59,6 +59,10 @@ uniform float uFocus;
 varying vec2 vUv;
 varying float vBend;
 
+// 방향성 번짐에 쓸 샘플 수. 홀수여야 가운데 샘플이 원본 자리에 놓인다.
+// 샘플이 적으면 번짐이 아니라 유령 복사본이 줄지어 보인다.
+const int SMEAR_SAMPLES = 7;
+
 void main() {
   vec2 uv = vUv;
 
@@ -69,16 +73,52 @@ void main() {
 
   // 색수차. 1.5픽셀을 넘기지 않는다 — 넘는 순간 광학이 아니라 효과로 보인다.
   vec2 shift = uVelocity * 0.0035 * uIntensity;
-  float r = texture2D(tMap, uv + shift).r;
-  vec4 g = texture2D(tMap, uv);
-  float b = texture2D(tMap, uv - shift).b;
 
-  vec3 color = vec3(r, g.g, b);
+  float speed = length(uVelocity);
+  vec3 color;
+  float alpha;
+
+  /*
+   * 분기 조건이 uniform이므로 한 드로우 안의 모든 픽셀이 같은 길을 간다 —
+   * 워프가 갈리지 않아 비용이 거의 없다. 정지 상태에서 다섯 번 읽는 낭비를 피하려는 것이다.
+   */
+  if (speed * uIntensity > 0.0015) {
+    /*
+     * 진행 방향으로 번진다. 셔터가 늦게 닫힌 자국이지 발광 효과가 아니다 —
+     * 흰 바닥에서 글로우는 죽고 광학의 실수만 읽힌다.
+     *
+     * 값이 작은 이유가 있다. 처음엔 1.1배에 상한 0.09로 잡았는데, 이미지 폭의 9%를
+     * 일곱 번도 안 되는 샘플로 훑으니 번짐이 아니라 유령 복사본이 줄지어 나왔다.
+     * 실제 스크롤에서 나오는 속도는 0.04 언저리다 — 거기서 5px쯤 끌리는 게
+     * 셔터가 늦게 닫힌 것처럼 보이는 지점이고, 상한은 그보다 빨리 굴렸을 때를 막는다.
+     */
+    vec2 smear = clamp(uVelocity * 0.30, -0.022, 0.022) * uIntensity;
+
+    vec3 acc = vec3(0.0);
+    alpha = 0.0;
+    for (int i = 0; i < SMEAR_SAMPLES; i++) {
+      float t = float(i) / float(SMEAR_SAMPLES - 1) - 0.5;
+      vec2 at = uv + smear * t;
+      acc.r += texture2D(tMap, at + shift).r;
+      vec4 mid = texture2D(tMap, at);
+      acc.g += mid.g;
+      acc.b += texture2D(tMap, at - shift).b;
+      alpha += mid.a;
+    }
+    color = acc / float(SMEAR_SAMPLES);
+    alpha /= float(SMEAR_SAMPLES);
+  } else {
+    float r = texture2D(tMap, uv + shift).r;
+    vec4 g = texture2D(tMap, uv);
+    float b = texture2D(tMap, uv - shift).b;
+    color = vec3(r, g.g, b);
+    alpha = g.a;
+  }
 
   // 커서 근처는 아주 조금 또렷해진다. 밝아지는 게 아니라 대비가 선다.
   float sharpen = (1.0 - uFocus) * 0.12 * uIntensity;
   color = clamp(color + (color - 0.5) * sharpen, 0.0, 1.0);
 
-  gl_FragColor = vec4(color, g.a * uOpacity);
+  gl_FragColor = vec4(color, alpha * uOpacity);
 }
 `

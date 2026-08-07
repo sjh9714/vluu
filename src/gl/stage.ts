@@ -28,6 +28,10 @@ interface Tracked {
   focus: number
   /** DOM 이미지를 숨겼는지. 인계는 사진 하나하나 단위로 일어난다. */
   handedOver: boolean
+  /** 직전 프레임에서 이 사진이 화면 어디에 있었는지. 속도는 여기서 나온다. */
+  lastCenter: { x: number; y: number } | null
+  /** 이 사진이 지금 얼마나 빠르게 움직이는지. 뷰포트 비율/프레임. */
+  velocity: { x: number; y: number }
 }
 
 /** 60fps 한 프레임당 따라잡는 비율. 실제 감쇠는 경과 시간으로 환산한다. */
@@ -71,7 +75,6 @@ export class GlStage {
 
   private raf = 0
   private lastFrameAt = 0
-  private lastScroll = { x: 0, y: 0 }
   private velocity = { x: 0, y: 0 }
   private pointer = { x: -9999, y: -9999 }
   private intensity = 1
@@ -119,6 +122,8 @@ export class GlStage {
       delete item.element.dataset['glReady']
     }
     this.tracked.length = 0
+    // 새 화면은 좌표계가 통째로 다르다. 속도도 0에서 시작한다.
+    this.velocity = { x: 0, y: 0 }
     this.mount(root)
 
     /*
@@ -171,13 +176,16 @@ export class GlStage {
         overlay: element.closest('[data-overlay]') !== null,
         focus: 1,
         handedOver: false,
+        lastCenter: null,
+        velocity: { x: 0, y: 0 },
       }
 
       // 공유 프로그램의 uniform을 이 메시가 그려지기 직전에 갈아 끼운다.
       mesh.onBeforeRender(() => {
         const uniforms = this.program.uniforms
         uniforms['tMap'].value = item.texture
-        uniforms['uVelocity'].value = [this.velocity.x, this.velocity.y]
+        // 속도는 사진마다 다르다. 서로 다른 속도로 움직이는 것들이 각자 맞는 전단을 받는다.
+        uniforms['uVelocity'].value = [item.velocity.x, item.velocity.y]
         uniforms['uIntensity'].value = this.intensity
         uniforms['uFocus'].value = item.focus
       })
@@ -195,7 +203,6 @@ export class GlStage {
     if (this.running || this.tracked.length === 0) return
     this.running = true
     this.resize()
-    this.lastScroll = { x: window.scrollX, y: window.scrollY }
     this.lastFrameAt = 0
 
     window.addEventListener('resize', this.resize, { passive: true })
@@ -311,13 +318,9 @@ export class GlStage {
     this.lastFrameAt = now
     const catchUp = 1 - (1 - DAMP) ** (elapsed / 16.667)
 
-    const dx = window.scrollX - this.lastScroll.x
-    const dy = window.scrollY - this.lastScroll.y
-    this.lastScroll = { x: window.scrollX, y: window.scrollY }
-    this.velocity.x += (dx / width - this.velocity.x) * catchUp
-    this.velocity.y += (dy / height - this.velocity.y) * catchUp
-    if (Math.abs(this.velocity.x) < REST) this.velocity.x = 0
-    if (Math.abs(this.velocity.y) < REST) this.velocity.y = 0
+    // 이 프레임에서 가장 빨리 움직인 값. inspect()가 이걸 보고한다.
+    let fastest = { x: 0, y: 0 }
+    let fastestSpeed = -1
 
     // 모프가 끝났으면 치운다. 진행 중이면 진행률을 구해둔다.
     let morphT = 1
@@ -344,6 +347,10 @@ export class GlStage {
     for (const item of this.tracked) {
       if (solo && !item.overlay) {
         item.mesh.visible = false
+        // 이 사진을 건너뛰는 동안 위치를 잊는다. 안 그러면 모달이 닫히는 순간
+        // 그동안 밀린 스크롤이 전부 한 프레임의 속도로 잡혀 화면이 튄다.
+        item.lastCenter = null
+        item.velocity = { x: 0, y: 0 }
         if (item.handedOver) {
           item.handedOver = false
           delete item.element.dataset['glReady']
@@ -352,6 +359,37 @@ export class GlStage {
       }
 
       let rect = item.element.getBoundingClientRect()
+
+      /*
+       * 속도는 **DOM이 놓은 자리**의 움직임에서 잰다. 모프로 보간하기 전 값이다.
+       *
+       * 창 스크롤, 컨테이너 가로 스크롤, 나중에 붙일 드래그까지 전부 같은 코드로 잡힌다 —
+       * 셰이더가 반응해야 하는 건 애초에 "화면에서 실제로 움직인 양"이고,
+       * 스크롤 값은 그 대리 지표였을 뿐이다. 그래서 컨테이너가 움직이는 노선 페이지에서
+       * uVelocity가 영원히 0이었다.
+       *
+       * 모프가 만든 이동은 제외한다. 포함하면 그리드에서 모달로 날아가는 내내
+       * 자기 이동 때문에 사진이 계속 기울어 있다.
+       */
+      const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+      if (item.lastCenter) {
+        const moved = {
+          x: (center.x - item.lastCenter.x) / width,
+          y: (center.y - item.lastCenter.y) / height,
+        }
+        // DOM이 움직인 방향과 사진이 밀려야 하는 방향은 반대다.
+        item.velocity.x += (-moved.x - item.velocity.x) * catchUp
+        item.velocity.y += (-moved.y - item.velocity.y) * catchUp
+        if (Math.abs(item.velocity.x) < REST) item.velocity.x = 0
+        if (Math.abs(item.velocity.y) < REST) item.velocity.y = 0
+      }
+      item.lastCenter = center
+
+      const speed = Math.hypot(item.velocity.x, item.velocity.y)
+      if (speed > fastestSpeed) {
+        fastestSpeed = speed
+        fastest = { x: item.velocity.x, y: item.velocity.y }
+      }
 
       /*
        * 넘어온 사진은 이전 화면에서 있던 자리부터 출발해 지금 자리로 이어진다.
@@ -408,6 +446,9 @@ export class GlStage {
       const dyp = this.pointer.y - (rect.top + rect.height / 2)
       item.focus = Math.min(1, Math.hypot(dxp, dyp) / (width * 0.4))
     }
+
+    // 밖에서 들여다볼 값은 가장 빨리 움직인 사진의 속도다.
+    this.velocity = fastestSpeed > 0 ? fastest : { x: 0, y: 0 }
 
     this.pool.evict()
     this.renderer.render({ scene: this.scene, camera: this.camera })

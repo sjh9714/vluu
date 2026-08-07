@@ -254,6 +254,37 @@ export default async function ColophonPage() {
         </section>
 
         <section className={styles.section}>
+          <h2>The distortion was reading the wrong number</h2>
+          <p>
+            The canvas skews and smears photographs in proportion to how fast you are moving. It took
+            that speed from the window&rsquo;s scroll position, which works on the index and does
+            nothing at all on a route page — those scroll a container sideways while the window sits
+            perfectly still. Measured, the shader velocity there was exactly zero. Every effect built
+            for that screen had never once run.
+          </p>
+          <p>
+            The fix was to stop reading scroll and start measuring what actually moved: each
+            photograph&rsquo;s own position, frame to frame. Window scroll, sideways container scroll,
+            and anything added later all arrive through the same path, because <strong>movement on
+            screen was always the thing the shader cared about</strong> — scroll position was only ever
+            standing in for it. Movement the transition itself creates is excluded, or a picture flying
+            from the grid into the overlay would lean the whole way there.
+          </p>
+          <p>
+            The blur that rides on that velocity was wrong twice before it was right. The first pass
+            smeared across nine percent of the frame using five samples, which is not motion blur but a
+            row of ghosts. Real scrolling produces a velocity around 0.04; a drag of roughly five pixels
+            there is where it stops looking like an effect and starts looking like a shutter held open a
+            moment too long.
+          </p>
+          <p>
+            A plain mouse has no horizontal wheel, so the route pages were, until now, only passable
+            with a trackpad. Vertical wheel is translated to sideways travel — and released again at
+            either end, because eating events you cannot act on makes a page feel stuck.
+          </p>
+        </section>
+
+        <section className={styles.section}>
           <h2>Opening a photograph without leaving the page</h2>
           <p>
             Clicking a frame opens it over the index rather than replacing it. The URL still changes to{' '}

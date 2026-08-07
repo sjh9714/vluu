@@ -73,11 +73,16 @@
   }
 }
 
+/* 진행률(0–1)이 여기 실린다. 스트립과 레일이 같은 값을 봐야 하므로 공통 조상에 둔다. */
+.field {
+  --progress: 0;
+}
+
 /* ── 노선도 ─────────────────────────────────────────────── */
 .rail {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--s-4);
   padding: 0 var(--gutter) var(--s-8);
   font-family: var(--face-mono);
   font-size: var(--t-micro);
@@ -87,8 +92,50 @@
   font-variant-numeric: tabular-nums;
 }
 
-.railLine {
+.rail > span:first-child,
+.rail > span:last-child {
+  flex: 0 0 auto;
+}
+
+.track {
+  position: relative;
   flex: 1 1 auto;
+  height: 12px;
+}
+
+.trackLine {
+  position: absolute;
+  inset: 50% 0 auto;
   height: var(--rule-w);
   background: var(--rule-strong);
+}
+
+/* 구간 경계. 자리는 클라이언트가 실측해 넣는다. */
+.tick {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: var(--rule-w);
+  background: var(--rule-strong);
+}
+
+/*
+ * 지금 위치. 레일 위를 미끄러진다 — 이 화면에서 유일하게 계속 움직이는 UI라
+ * 다른 것들처럼 잉크 색으로만 그린다.
+ */
+.marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--progress) * 100%);
+  width: 2px;
+  background: var(--ink);
+  translate: -1px 0;
+  transition: left 90ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker {
+    transition: none;
+  }
 }

@@ -73,6 +73,41 @@ test.describe('화면 간 모프', () => {
     )
   })
 
+  test('모프가 만든 이동은 속도로 잡히지 않는다', async ({ page }) => {
+    await page.goto('/')
+    await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
+
+    /*
+     * 첫 줄의 사진을 고른다. 화면 밖의 것을 누르면 Playwright가 클릭 전에 스크롤해서
+     * 넣는데, 그 스크롤이 만든 진짜 속도가 감쇠하며 모프 구간까지 흘러들어온다.
+     * 그러면 모프 탓이 아닌 값을 모프 탓으로 읽게 된다.
+     */
+    const target = page.locator('[data-photo]').nth(1)
+    await expect(target).toBeInViewport()
+    await expect
+      .poll(() => page.evaluate(() => Math.hypot(...window.__vluuGl!.inspect().velocity)))
+      .toBe(0)
+
+    /*
+     * 속도를 엘리먼트의 이동에서 재기 시작하면서 생긴 위험이다.
+     * 모프로 보간한 rect까지 속도로 치면, 그리드에서 모달로 날아가는 내내
+     * 사진이 자기 이동 때문에 계속 기울고 번진다.
+     */
+    await target.click()
+
+    let peak = 0
+    for (let i = 0; i < 12; i++) {
+      const v = await page.evaluate(() => {
+        const s = window.__vluuGl!.inspect()
+        return { moving: s.morphing !== null, speed: Math.hypot(...s.velocity) }
+      })
+      if (v.moving) peak = Math.max(peak, v.speed)
+      await page.waitForTimeout(50)
+    }
+
+    expect(peak, `모프 중에 속도 ${peak.toFixed(4)}가 잡혔다`).toBeLessThan(0.01)
+  })
+
   test('모션을 끈 사용자에게는 모프가 없다', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/')
