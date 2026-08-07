@@ -41,7 +41,7 @@ test('좌표가 없는 프레임은 그리지 않고, 몇 장인지 밝힌다', 
 
   await page.goto('/c/kanto')
   await expect(page.locator('[data-route-plot] p').first()).toContainText(
-    `${withGps} of ${route.photos.length} frames carry coordinates`,
+    `${withGps} of ${route.photos.length} frames have coordinates`,
   )
 })
 

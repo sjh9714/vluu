@@ -3,7 +3,6 @@ import type { Photo, Route } from '#content/types'
 import * as fmt from '@/lib/format'
 import {
   bounds,
-  distanceKm,
   fit,
   formatKm,
   niceStep,
@@ -49,15 +48,6 @@ export function RoutePlot({ route }: { route: Route }) {
   /** 좌표가 두 자리 이상인가. 강화는 아니다 — 두 장이 같은 자리에서 찍혔다. */
   const spread = box.widthKm > 0 || box.heightKm > 0
 
-  /*
-   * 사이를 이은 선의 총합. "걸은 거리"가 아니다 — 사진과 사진 사이를 직선으로 이었을 뿐이라
-   * 그렇게 부르면 거짓말이 된다. 날들 사이는 더하지 않는다. 그 사이는 이동이 아니라 밤이다.
-   */
-  const chain = route.legs.reduce((sum, leg) => {
-    const pts = leg.photos.filter((p) => gps(p)).map((p) => gps(p)!)
-    return sum + pts.slice(1).reduce((s, p, i) => s + distanceKm(pts[i]!, p), 0)
-  }, 0)
-
   const days = route.legs
     .map((leg, index) => ({ leg, number: index + 1, photos: leg.photos.filter((p) => gps(p)) }))
     .filter((day) => day.photos.length > 0)
@@ -69,21 +59,18 @@ export function RoutePlot({ route }: { route: Route }) {
     <section className={styles.plot} data-route-plot={route.slug} aria-labelledby={`plot-${route.slug}`}>
       <div className={styles.head}>
         <h2 id={`plot-${route.slug}`}>Where</h2>
+        {/*
+          여행에 대한 사실만 남긴다. "북쪽이 위이고 베이스맵은 없다" 같은 건 내가 어떻게
+          그렸는지에 대한 말이지 이 여행에 대한 말이 아니다 — 그건 Colophon에 있다.
+        */}
         <p>
           {spread ? (
             <>
               {formatKm(box.widthKm)} east to west, {formatKm(box.heightKm)} north to south.
-              Straight lines between consecutive frames total {formatKm(chain)}.{' '}
-              {missing > 0
-                ? `${located.length} of ${route.photos.length} frames carry coordinates.`
-                : 'Every frame carries coordinates.'}{' '}
-              North is up; no basemap, only the coordinates.
+              {missing > 0 ? ` ${located.length} of ${route.photos.length} frames have coordinates.` : ''}
             </>
           ) : (
-            <>
-              One place. Every frame here shares a single coordinate, so there is no line to
-              draw and no scale to draw it at.
-            </>
+            <>One place — every frame here shares a coordinate.</>
           )}
         </p>
       </div>

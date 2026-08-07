@@ -47,7 +47,8 @@ export const ROUTES: readonly RouteDef[] = [
     slug: 'kanto',
     title: 'Kantō',
     intro:
-      'A week in January with a sky that never clouded over. Tokyo by river and elevated rail, then west to the crater lake, then back down to the harbour. Most of what is here.',
+      // "Most of what is here"로 끝났었다 — 여행이 아니라 이 사이트에 대한 말이라 뺐다.
+      'A week in January with a sky that never clouded over. Tokyo by river and elevated rail, then west to the crater lake, then back down to the harbour.',
     from: '2025-01-01',
     to: '2025-01-31',
     legTitles: {
