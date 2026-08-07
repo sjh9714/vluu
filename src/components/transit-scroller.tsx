@@ -100,6 +100,13 @@ export function TransitScroller({
       <div
         ref={strip}
         className={styles.strip}
+        /*
+         * 스크롤 이동을 왜곡으로 받는 유일한 자리.
+         *
+         * 아카이브 인덱스는 읽는 화면이라 굴리는 내내 사진이 일렁이면 안 된다.
+         * 여기는 가로로 통과하는 것 자체가 주제이므로 이동이 곧 내용이다.
+         */
+        data-gl-motion=""
         // 키보드로도 통과할 수 있어야 한다. 포커스를 받으면 방향키가 그대로 동작한다.
         tabIndex={0}
         role="region"

@@ -259,7 +259,22 @@ export default async function ColophonPage() {
             Every photograph here is a real <code>&lt;img&gt;</code> in a box with a fixed aspect ratio.
             Layout, reading order, alt text and layout shift are settled before any motion work begins.
             A single WebGL canvas then reads those elements&rsquo; positions each frame and draws planes
-            in exactly the same place, distorted by how fast you are scrolling.
+            in exactly the same place.
+          </p>
+          <p>
+            <em>In exactly the same place</em> was a claim, not a fact. The canvas built its world from{' '}
+            <code>window.innerWidth</code>, but a <code>position: fixed</code> element sized at 100%
+            covers the layout viewport, which excludes the scrollbar. World 1280, box 1265 — a scale of
+            0.988 that nothing corrected. The right-hand column was drawn{' '}
+            <strong>11.7 pixels left of its own frame</strong>, and slid there the instant the canvas
+            took over. It now measures the canvas rather than the window, so the two coordinate systems
+            are the same one.
+          </p>
+          <p>
+            That was worse on a phone than the number suggests. Mobile Safari collapses its address bar
+            as you scroll, so <code>window.innerHeight</code> changes continuously while the fixed
+            canvas does not. The vertical scale was drifting for the whole length of every scroll —
+            which is what &ldquo;the photographs will not sit still&rdquo; actually was.
           </p>
           <p>
             It also takes its pixels from the DOM. The <code>&lt;img&gt;</code> has already chosen a
@@ -282,28 +297,54 @@ export default async function ColophonPage() {
         </section>
 
         <section className={styles.section}>
-          <h2>The distortion was reading the wrong number</h2>
+          <h2>One number, wrong three times</h2>
           <p>
-            The canvas skews and smears photographs in proportion to how fast you are moving. It took
-            that speed from the window&rsquo;s scroll position, which works on the index and does
-            nothing at all on a route page — those scroll a container sideways while the window sits
-            perfectly still. Measured, the shader velocity there was exactly zero. Every effect built
-            for that screen had never once run.
+            The canvas skews and smears photographs in proportion to how fast they are moving. That one
+            number was wrong in three different ways, and each was invisible in a screenshot.
           </p>
           <p>
-            The fix was to stop reading scroll and start measuring what actually moved: each
-            photograph&rsquo;s own position, frame to frame. Window scroll, sideways container scroll,
-            and anything added later all arrive through the same path, because <strong>movement on
-            screen was always the thing the shader cared about</strong> — scroll position was only ever
-            standing in for it. Movement the transition itself creates is excluded, or a picture flying
-            from the grid into the overlay would lean the whole way there.
+            <strong>Wrong source.</strong> It came from the window&rsquo;s scroll position, which works
+            on the index and does nothing at all on a route page — those scroll a container sideways
+            while the window sits perfectly still. Measured, the shader velocity there was exactly zero;
+            every effect built for that screen had never once run. It now measures what actually moved:
+            each photograph&rsquo;s own position, frame to frame. Window scroll, sideways container
+            scroll and the cursor all arrive through the same path, because <strong>movement on screen
+            was always the thing the shader cared about</strong>.
+          </p>
+          <p>
+            <strong>Wrong unit.</strong> It counted pixels per <em>frame</em> and never divided by
+            time, so the same scroll produced a larger distortion whenever a frame ran long. Driving
+            the page at a fixed 900 px/s and throttling only the CPU:
+          </p>
+          <pre className={styles.pre}>
+            {`dt  8.6ms → 0.01240
+dt 41.6ms → 0.01222   one frame runs long
+dt  8.3ms → 0.01508   the next spikes 22%
+
+steady 60fps  0.0081 – 0.0104   (1.3×)
+under load    0.0078 – 0.0208   (2.7×)`}
+          </pre>
+          <p>
+            The physical speed never changed. Everything in that range is the frame rate leaking into
+            the picture, and on a phone — where frame times vary far more — it read as a photograph that
+            would not settle. Velocity is now normalised to a 60 fps frame before anything sees it, so a
+            dropped frame changes when the value arrives and never how large it is.
+          </p>
+          <p>
+            <strong>Wrong place.</strong> The archive index is for reading, and something that ripples
+            the entire time you scroll it is at war with that. Scroll now drives distortion only inside
+            the route strip, where travelling sideways <em>is</em> the subject. On the index the motion
+            belongs to your hand: the photograph under the cursor takes its velocity from yours, settles
+            three pixels into its own frame, and leans up to three pixels after you — bounded by
+            construction, so it can never cross the hairline the DOM drew around it.
           </p>
           <p>
             The blur that rides on that velocity was wrong twice before it was right. The first pass
             smeared across nine percent of the frame using five samples, which is not motion blur but a
-            row of ghosts. Real scrolling produces a velocity around 0.04; a drag of roughly five pixels
+            row of ghosts. Real movement produces a velocity around 0.04; a drag of roughly five pixels
             there is where it stops looking like an effect and starts looking like a shutter held open a
-            moment too long.
+            moment too long. Anything faster is clamped, because a flick across the screen is half a
+            viewport in one frame and would tear the picture in half.
           </p>
           <p>
             A plain mouse has no horizontal wheel, so the route pages were, until now, only passable
@@ -379,8 +420,8 @@ export default async function ColophonPage() {
             bought variety by spending every alignment line on the page, and what was left read as
             spillage rather than a collection. Uniform tiles are not a compromise for material like
             this; they are what it wants. The variety now comes from section structure and type, and
-            the scroll distortion is easier to see, not harder, because there is finally a straight
-            edge to distort.
+            the distortion under your cursor is easier to see, not harder, because there is finally a
+            straight edge to distort.
           </p>
           <p>
             <strong>22 frames were cut and the reasons kept.</strong> Duplicates, a museum wall label

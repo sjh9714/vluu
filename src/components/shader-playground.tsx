@@ -150,7 +150,7 @@ export function ShaderPlayground({ photo }: { photo: Photo }) {
       <div className={styles.knobs}>
         <label className={styles.knob}>
           <span>
-            Scroll velocity <b>{velocity.toFixed(3)}</b>
+            Velocity <b>{velocity.toFixed(3)}</b>
           </span>
           <input
             className="vluu-range"
@@ -162,7 +162,8 @@ export function ShaderPlayground({ photo }: { photo: Photo }) {
             onChange={(event) => setVelocity(Number(event.target.value))}
           />
           <span className={styles.note}>
-            Real scrolling peaks near 0.04. Past that the smear is capped on purpose.
+            Viewport fractions per 60fps frame — the same unit whether it came from a scroll or from
+            your cursor. Real movement peaks near 0.04 and the site clamps at 0.05.
           </span>
         </label>
 

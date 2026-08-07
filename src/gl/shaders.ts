@@ -16,7 +16,9 @@ attribute vec3 position;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 
-// 스크롤·드래그 속도. x는 수평, y는 수직. 픽셀/프레임을 정규화한 값.
+// 이 사진이 지금 얼마나 빠르게 움직이는가. 스크롤이 밀었든 커서가 밀었든 같은 단위다 —
+// **뷰포트 비율 / 60fps 한 프레임.** 프레임당 픽셀로 두면 프레임이 길어질 때 왜곡이
+// 같이 커져서, 느린 기기에서 사진이 이유 없이 떤다.
 uniform vec2 uVelocity;
 uniform float uIntensity;
 
