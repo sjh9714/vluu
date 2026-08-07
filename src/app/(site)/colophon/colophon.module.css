@@ -1,0 +1,166 @@
+.page {
+  padding: var(--s-7) var(--gutter) var(--s-10);
+}
+
+.lede {
+  max-width: var(--measure);
+}
+
+.lede h1 {
+  font-size: var(--t-h1);
+  letter-spacing: var(--tr-head);
+}
+
+.lede p {
+  margin-top: var(--s-4);
+  font-size: var(--t-lead);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+/* ── 실측 수치 ─────────────────────────────────────────── */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s-5);
+  margin-top: var(--s-8);
+  padding-top: var(--s-5);
+  border-top: var(--rule-w) solid var(--rule-strong);
+}
+
+.figure dt {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.figure dd {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-h2);
+  letter-spacing: var(--tr-head);
+  font-variant-numeric: tabular-nums;
+}
+
+.figure dd small {
+  font-size: var(--t-small);
+  letter-spacing: 0;
+  color: var(--ink-mute);
+}
+
+/* ── 본문 ──────────────────────────────────────────────── */
+.section {
+  margin-top: var(--s-9);
+  max-width: var(--measure);
+}
+
+.section h2 {
+  font-size: var(--t-h3);
+  letter-spacing: var(--tr-head);
+  padding-bottom: var(--s-3);
+  border-bottom: var(--rule-w) solid var(--rule);
+}
+
+.section p {
+  margin-top: var(--s-4);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+.section p strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.section code {
+  font-family: var(--face-mono);
+  font-size: 0.92em;
+  color: var(--ink);
+}
+
+/* 각 함정을 하나씩 — 번호가 아니라 제목이 구분자다. 순서가 있는 게 아니라 목록이다. */
+.traps {
+  margin-top: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.trap {
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
+.trap h3 {
+  font-family: var(--face-mono);
+  font-size: var(--t-mini);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.trap p {
+  margin-top: var(--s-2);
+}
+
+/* ── 표 ────────────────────────────────────────────────── */
+.tableWrap {
+  margin-top: var(--s-5);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--face-mono);
+  font-size: var(--t-mini);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  padding: var(--s-2) var(--s-4) var(--s-2) 0;
+  text-align: left;
+  border-bottom: var(--rule-w) solid var(--rule);
+}
+
+.table th {
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 400;
+}
+
+.table td:not(:first-child) {
+  text-align: right;
+  padding-right: 0;
+}
+
+.contact {
+  margin-top: var(--s-9);
+  padding-top: var(--s-5);
+  border-top: var(--rule-w) solid var(--rule-strong);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-6);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+}
+
+.contact a {
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 2px;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.contact a:hover {
+  border-bottom-color: var(--ink);
+}
+
+.contact span {
+  color: var(--ink-faint);
+}

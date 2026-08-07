@@ -1,0 +1,281 @@
+import type { Metadata } from 'next'
+import { readdir, stat } from 'node:fs/promises'
+import path from 'node:path'
+import { SiteHeader } from '@/components/site-header'
+import { PHOTO_LIST, ROUTE_LIST } from '@/lib/photos'
+import styles from './colophon.module.css'
+
+export const metadata: Metadata = {
+  title: 'Colophon',
+  description: 'How this site is built — the image pipeline, the traps, and the decisions.',
+}
+
+/**
+ * 이 페이지의 수치는 빌드할 때 실제 파일을 재서 채운다.
+ * 손으로 적어두면 다음 ingest에서 곧바로 거짓말이 되기 때문이다.
+ */
+async function measure() {
+  const dir = path.join(process.cwd(), 'public', 'media')
+  const totals = new Map<string, { count: number; bytes: number }>()
+
+  for (const key of await readdir(dir).catch(() => [])) {
+    for (const file of await readdir(path.join(dir, key)).catch(() => [])) {
+      const ext = path.extname(file).slice(1)
+      const { size } = await stat(path.join(dir, key, file))
+      const bucket = totals.get(ext) ?? { count: 0, bytes: 0 }
+      totals.set(ext, { count: bucket.count + 1, bytes: bucket.bytes + size })
+    }
+  }
+
+  const rows = [...totals.entries()].sort((a, b) => b[1].bytes - a[1].bytes)
+  const bytes = rows.reduce((sum, [, v]) => sum + v.bytes, 0)
+  return { rows, bytes }
+}
+
+const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`
+
+/**
+ * 여기만 손으로 적는다. Lighthouse 점수는 빌드 중에 잴 수 없기 때문이다.
+ * 대신 언제 어떤 조건에서 쟀는지를 함께 적어 숫자가 늙는 걸 숨기지 않는다.
+ */
+const MEASURED_ON = '7 August 2026'
+const MEASUREMENTS = [
+  { route: '/', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
+  { route: '/c/*', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
+  { route: '/p/*', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', cls: '0' },
+  { route: '/colophon', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', cls: '0' },
+] as const
+
+export default async function ColophonPage() {
+  const media = await measure()
+
+  const live = PHOTO_LIST.filter((p) => p.live).length
+  const pixels = PHOTO_LIST.reduce((sum, p) => sum + p.width * p.height, 0)
+  const focals = new Map<number, number>()
+  for (const photo of PHOTO_LIST) {
+    const value = photo.exif.focalLength35
+    if (value !== null) focals.set(value, (focals.get(value) ?? 0) + 1)
+  }
+
+  return (
+    <>
+      <SiteHeader current="colophon" />
+      <main className={styles.page}>
+        <div className={styles.lede}>
+          <h1>Colophon</h1>
+          <p>
+            VLUU was a Next.js and Sanity site. This is the second one — same photographs, nothing
+            else carried over. No CMS, no runtime image service: the pictures are baked into the
+            repository by a build script, and the site is static all the way down.
+          </p>
+        </div>
+
+        <dl className={styles.figures}>
+          <div className={styles.figure}>
+            <dt>Frames</dt>
+            <dd>
+              {PHOTO_LIST.length} <small>of 90 shot</small>
+            </dd>
+          </div>
+          <div className={styles.figure}>
+            <dt>Live Photos</dt>
+            <dd>{live}</dd>
+          </div>
+          <div className={styles.figure}>
+            <dt>Source pixels</dt>
+            <dd>
+              {(pixels / 1_000_000).toFixed(0)} <small>megapixels</small>
+            </dd>
+          </div>
+          <div className={styles.figure}>
+            <dt>Shipped media</dt>
+            <dd>{mb(media.bytes)}</dd>
+          </div>
+        </dl>
+
+        <section className={styles.section}>
+          <h2>The pipeline</h2>
+          <p>
+            Originals live outside git. <code>pnpm ingest</code> reads them, bakes a responsive set
+            into <code>public/media</code>, and writes a manifest that the app imports like any other
+            module. Run it twice and the second run changes nothing — the script hashes each source
+            and skips what it has already seen.
+          </p>
+          <p>
+            Three things went wrong on the way, and all three were quiet rather than loud. That is
+            the interesting part: none of them threw.
+          </p>
+
+          <div className={styles.traps}>
+            <div className={styles.trap}>
+              <h3>sharp cannot open an iPhone HEIC</h3>
+              <p>
+                libvips reports HEIF input support, so the format table says yes. Then it refuses the
+                actual file: a Live Photo HEIC carries 45 item references and libheif caps them at 16
+                for safety. The fix is to decode through macOS <code>sips</code> to lossless PNG
+                first, which turns the fallback into the primary path.
+              </p>
+            </div>
+
+            <div className={styles.trap}>
+              <h3>Portrait photographs are stored sideways</h3>
+              <p>
+                An iPhone writes the sensor&rsquo;s landscape pixels and a rotation tag, not a rotated
+                image. Anything that ignores the tag renders all 68 frames lying on their side — which
+                is exactly what the first contact sheet looked like. <code>sharp.rotate()</code> with
+                no argument reads the tag and actually turns the pixels.
+              </p>
+            </div>
+
+            <div className={styles.trap}>
+              <h3>The clock was nine hours off</h3>
+              <p>
+                exifr applies <code>OffsetTimeOriginal</code> and hands back true UTC. Read those
+                fields as wall clock and a nine-in-the-morning photograph in Asakusa becomes 00:26 —
+                and every frame shot before 09:00 local falls into the previous day&rsquo;s leg. Since
+                the routes on this site are grouped by date, that silently reshuffled the whole
+                sequence. Nothing errored; the dates were simply wrong.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2>What gets shipped</h2>
+          <p>
+            AVIF is the delivery path. WebP exists only for browsers that cannot read it, so it is
+            baked at two widths instead of four — at equal quality it runs close to twice the size,
+            and spending a third of the repository on a fallback for a sliver of traffic is a bad
+            trade. Widths stop at 2048: a 3:4 portrait filling a 16-inch display needs 1675 pixels,
+            and going to 2560 costs half again as many bytes for detail the viewer never shows.
+          </p>
+
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Format</th>
+                  <th>Files</th>
+                  <th>Size</th>
+                  <th>Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {media.rows.map(([ext, row]) => (
+                  <tr key={ext}>
+                    <td>{ext}</td>
+                    <td>{row.count}</td>
+                    <td>{mb(row.bytes)}</td>
+                    <td>{((row.bytes / media.bytes) * 100).toFixed(0)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2>Measured</h2>
+          <p>
+            Lighthouse, desktop preset, production build, {MEASURED_ON}. These are a snapshot rather
+            than a promise — the useful part is the shape of them: nothing blocks, nothing shifts, and
+            the largest image on screen arrives in well under a second.
+          </p>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Perf</th>
+                  <th>A11y</th>
+                  <th>Best</th>
+                  <th>SEO</th>
+                  <th>LCP</th>
+                  <th>CLS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MEASUREMENTS.map((row) => (
+                  <tr key={row.route}>
+                    <td>{row.route}</td>
+                    <td>{row.performance}</td>
+                    <td>{row.accessibility}</td>
+                    <td>{row.bestPractices}</td>
+                    <td>{row.seo}</td>
+                    <td>{row.lcp}</td>
+                    <td>{row.cls}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The accessibility score was not 100 to begin with. The muted grey used for labels sat at
+            2.5:1 against white — quiet to look at, and below the 4.5:1 that makes text readable. The
+            palette now has three steps and all of them clear it.
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>DOM first, canvas second</h2>
+          <p>
+            Every photograph on this site is a real <code>&lt;img&gt;</code> in a box with a fixed
+            aspect ratio. Layout, reading order, alt text and cumulative layout shift are settled
+            before any of the motion work begins. The WebGL layer that follows reads those elements&rsquo;
+            positions and draws over them; when it fails, is switched off, or the reader has asked for
+            reduced motion, the canvas simply stops and the page underneath is already correct.
+          </p>
+          <p>
+            <strong>The fallback is not a degraded version. It is the site, with a layer removed.</strong>
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>Decisions worth arguing with</h2>
+          <p>
+            <strong>There is no dark theme.</strong> A white cube is the concept, not a default — the
+            photographs are the only saturated thing on screen and a dark version cancels half of
+            that. Committing to one world beats supporting two badly.
+          </p>
+          <p>
+            <strong>Sequence comes from the camera, not from taste.</strong> Routes are trips, legs
+            are days, and a frame&rsquo;s place is decided by when it was taken. No hand-kept ordering
+            to drift out of date when new photographs arrive.
+          </p>
+          <p>
+            <strong>22 frames were cut and the reasons kept.</strong> Duplicates, a museum wall label
+            that was somebody else&rsquo;s work, a picture at one twelfth the resolution of the rest.
+            The list lives in the repository so the question does not get relitigated.
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2>Made with</h2>
+          <p>
+            Next.js and React, TypeScript, CSS Modules with hand-written tokens. Type is Archivo,
+            carrying a variable width axis, set against DM Mono for anything the camera recorded.
+            Images through sharp, metadata through exifr, Live Photos through ffmpeg. Vitest for the
+            pure logic, Playwright for the browser. {ROUTE_LIST.length} routes,{' '}
+            {ROUTE_LIST.reduce((n, r) => n + r.legs.length, 0)} legs,{' '}
+            {[...focals.entries()]
+              .sort((a, b) => a[0] - b[0])
+              .map(([mm, count]) => `${mm}mm ×${count}`)
+              .join(', ')}
+            .
+          </p>
+        </section>
+
+        <p className={styles.contact}>
+          <a href="mailto:jinhyuk9714@gmail.com">jinhyuk9714@gmail.com</a>
+          <a href="https://github.com/sjh9714" rel="me noreferrer">
+            GitHub
+          </a>
+          <a href="https://instagram.com/sungjinhyuk" rel="me noreferrer">
+            Instagram
+          </a>
+          <span>Shot on iPhone 15 Pro</span>
+        </p>
+      </main>
+    </>
+  )
+}

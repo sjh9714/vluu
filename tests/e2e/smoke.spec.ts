@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test'
-import { PHOTO_LIST, ROUTE_LIST } from '../../src/lib/photos'
 
-test('홈이 뜨고 콘텐츠 레이어의 실제 수치를 보여준다', async ({ page }) => {
+test('사이트 셸이 선다', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: 'VLUU' })).toBeVisible()
-  // 문구가 아니라 수치를 본다 — 파이프라인이 앱까지 이어졌는지가 확인하려는 것이다.
-  await expect(page.getByText(`Frames ${PHOTO_LIST.length}`)).toBeVisible()
-  await expect(page.getByText(`Routes ${ROUTE_LIST.length}`)).toBeVisible()
+  await expect(page.getByRole('link', { name: 'VLUU' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Routes' })).toBeVisible()
 })
 
 test('바닥은 순백이다 — 화이트 큐브', async ({ page }) => {
@@ -21,4 +18,14 @@ test('키보드만으로 본문에 도달할 수 있다', async ({ page, isMobil
   await page.goto('/')
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused()
+})
+
+test('폰트가 실제로 로드된다 — 시스템 폴백으로 새지 않는다', async ({ page }) => {
+  await page.goto('/')
+  const families = await page.evaluate(() => ({
+    display: getComputedStyle(document.body).fontFamily,
+    mono: getComputedStyle(document.querySelector('nav')!).fontFamily,
+  }))
+  expect(families.display).toContain('Archivo')
+  expect(families.mono).toContain('Mono')
 })

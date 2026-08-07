@@ -24,10 +24,13 @@ function join(source: PhotoSource): Photo {
   }
 }
 
-/** 시간순. 촬영일시가 없는 프레임은 보정한 날짜의 맨 앞에 둔다. */
+/**
+ * 시간순. 촬영 시각을 모르는 프레임은 그날의 **끝**에 둔다.
+ * 앞에 두면 시각을 모른다는 이유만으로 노선의 첫 장이 되어버린다.
+ */
 function chronological(a: Photo, b: Photo): number {
-  const left = a.exif.shotAt || `${a.exif.shotDate}T00:00:00`
-  const right = b.exif.shotAt || `${b.exif.shotDate}T00:00:00`
+  const left = a.exif.shotAt || `${a.exif.shotDate}T99`
+  const right = b.exif.shotAt || `${b.exif.shotDate}T99`
   return left.localeCompare(right) || a.key.localeCompare(b.key)
 }
 

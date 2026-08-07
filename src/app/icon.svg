@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 화이트 큐브 안에 걸린 3:4 세로 프레임. 이 셀렉의 68장이 전부 이 비율이다. -->
+  <rect width="32" height="32" fill="#0a0a0b"/>
+  <rect x="10" y="6" width="12" height="16" fill="#ffffff"/>
+  <rect x="10" y="24" width="12" height="2" fill="#ffffff"/>
+</svg>

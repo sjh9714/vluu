@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   // 런타임 최적화기를 태울 게 없으므로 next/image는 쓰지 않고 순수 <img srcset>을 쓴다.
   images: { unoptimized: true },
   typedRoutes: true,
+  // dev 서버는 localhost로 뜨는데 Playwright와 스크린샷은 127.0.0.1로 붙는다.
+  // Next 16은 이걸 교차 출처로 보고 _next 청크를 403으로 막아 하이드레이션이 통째로 죽는다.
+  // SSR된 화면은 멀쩡해 보여서 알아채기 어렵다.
+  allowedDevOrigins: ['127.0.0.1'],
 }
 
 export default nextConfig

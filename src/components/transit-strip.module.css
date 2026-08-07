@@ -1,0 +1,94 @@
+/*
+ * TRANSIT — 노선 하나를 수평으로 통과한다.
+ *
+ * Phase 2는 브라우저의 네이티브 수평 스크롤을 쓴다. 트랙패드, 방향키,
+ * shift+휠이 전부 그냥 동작하고 JS가 없어도 읽힌다.
+ * Phase 5에서 휠→수평 변환과 속도 기반 셰이더가 이 위에 얹힌다.
+ */
+
+.head {
+  padding: var(--s-7) var(--gutter) var(--s-5);
+  max-width: var(--measure);
+}
+
+.head h1 {
+  font-size: var(--t-h1);
+  letter-spacing: var(--tr-head);
+}
+
+.head p {
+  margin-top: var(--s-4);
+  font-size: var(--t-lead);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 4vw, 72px);
+  padding: var(--s-4) var(--gutter) var(--s-6);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* 스크롤바는 지우지 않는다 — 수평으로 움직인다는 유일한 힌트다 */
+  scrollbar-width: thin;
+}
+
+/* 구간(=하루)의 시작을 알리는 세로 라벨. 사진 사이에 끼어든다. */
+.legMark {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  padding-inline-end: var(--s-3);
+  border-inline-end: var(--rule-w) solid var(--rule-strong);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.legMark b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.stop {
+  flex: 0 0 auto;
+  /* 세로 사진이 화면 높이를 기준으로 서고, 폭은 3:4에서 따라온다 */
+  width: calc(58svh * 0.75);
+  max-width: 78vw;
+  scroll-snap-align: center;
+}
+
+@media (max-width: 720px) {
+  .stop {
+    width: calc(48svh * 0.75);
+    max-width: 82vw;
+  }
+}
+
+/* ── 노선도 ─────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0 var(--gutter) var(--s-8);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.railLine {
+  flex: 1 1 auto;
+  height: var(--rule-w);
+  background: var(--rule-strong);
+}

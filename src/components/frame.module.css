@@ -1,0 +1,86 @@
+/*
+ * 한 장의 사진. 사이트에서 가장 많이 쓰이는 단위다.
+ *
+ * 레이아웃은 전적으로 DOM이 잡는다. Phase 3에서 WebGL 캔버스가 이 엘리먼트의
+ * getBoundingClientRect()를 읽어 같은 자리에 평면을 그리므로, 여기 크기가
+ * 곧 화면의 진실이다. 캔버스가 켜지면 img의 opacity만 0이 된다.
+ */
+
+.frame {
+  position: relative;
+  display: block;
+  /* aspect-ratio를 인라인으로 받는다 → 이미지가 오기 전에 자리가 확정된다 (CLS 0) */
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--frame-color, var(--paper-raise));
+}
+
+/* 로딩 중에는 LQIP가 배경으로 깔린다. JS 없이 CSS만으로 동작한다. */
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-image: var(--frame-lqip);
+  background-size: cover;
+  background-position: center;
+  transition: opacity var(--t-base) var(--ease);
+}
+
+/* 캔버스가 그리는 동안에는 DOM 이미지를 숨긴다. GL이 죽으면 이 속성이 사라지고 그대로 보인다. */
+:global([data-gl='on']) .image {
+  opacity: 0;
+}
+
+.link {
+  display: block;
+  position: relative;
+  outline-offset: var(--focus-gap);
+}
+
+/* 화이트 큐브에는 그림자가 없다. 존재는 헤어라인으로만 표시한다. */
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--rule-w) solid var(--rule);
+  pointer-events: none;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.link:hover::after {
+  border-color: var(--rule-strong);
+}
+
+/* 포커스 링만 채도를 허용한다 — 그 사진의 대표색으로 */
+.link:focus-visible {
+  outline: var(--focus-w) solid var(--frame-color, var(--focus));
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-2);
+  margin-top: var(--s-2);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-mute);
+}
+
+.caption .title {
+  color: var(--ink);
+}
+
+/* Live Photo 표시. 점 하나. 설명은 붙이지 않는다 — 커서를 올리면 알게 된다. */
+.live {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px rgba(10, 10, 11, 0.25);
+}

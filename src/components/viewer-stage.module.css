@@ -1,0 +1,161 @@
+/*
+ * VIEWER — 한 장을 조용히 본다.
+ *
+ * 여기가 사이트에서 가장 조용해야 하는 화면이다. 크롬은 헤어라인 한 줄,
+ * 메타데이터는 모노스페이스 한 단, 그리고 나머지는 전부 사진에 준다.
+ */
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: var(--s-7);
+  align-items: start;
+  padding: var(--s-6) var(--gutter) var(--s-9);
+}
+
+@media (max-width: 860px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-5);
+  }
+}
+
+.plate {
+  position: relative;
+  /* 사진이 뷰포트 안에 통째로 들어오게 한다. 세로 사진이라 높이가 제약이다. */
+  max-height: calc(100svh - var(--s-10));
+  display: flex;
+  justify-content: center;
+}
+
+.image {
+  max-width: 100%;
+  max-height: calc(100svh - var(--s-10));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background-image: var(--frame-lqip);
+  background-size: cover;
+}
+
+/* ── Live Photo ────────────────────────────────────────── */
+.live {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 100%;
+  max-height: calc(100svh - var(--s-10));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease);
+}
+
+.live[data-playing] {
+  opacity: 1;
+}
+
+.liveToggle {
+  position: absolute;
+  left: var(--s-3);
+  bottom: var(--s-3);
+  padding: 4px 9px;
+  background: var(--paper);
+  border: var(--rule-w) solid var(--rule-strong);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.liveToggle:hover,
+.liveToggle[aria-pressed='true'] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/*
+ * 모션을 끈 사용자에게는 Live를 아예 제안하지 않는다.
+ * 재생 버튼을 남겨두는 건 그 설정을 무시하면서 책임만 넘기는 것이다.
+ * display:none이면 탭 순서에서도 빠진다.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .live,
+  .liveToggle {
+    display: none;
+  }
+}
+
+/* ── 메타데이터 단 ─────────────────────────────────────── */
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  position: sticky;
+  top: calc(var(--s-8) + var(--s-2));
+}
+
+.title {
+  font-size: var(--t-h3);
+  letter-spacing: var(--tr-head);
+}
+
+.caption {
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-1) var(--s-4);
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.facts dt {
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+/* ── 앞뒤 ──────────────────────────────────────────────── */
+.moves {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+}
+
+.moves a {
+  color: var(--ink-mute);
+  transition: color var(--t-fast) var(--ease);
+}
+
+.moves a:hover {
+  color: var(--ink);
+}
+
+.moves span {
+  color: var(--ink-faint);
+}

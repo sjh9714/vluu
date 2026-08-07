@@ -1,0 +1,60 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-chrome);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-3) var(--s-6);
+  padding: var(--s-4) var(--gutter);
+  background: var(--paper);
+  border-bottom: var(--rule-w) solid var(--rule);
+}
+
+.wordmark {
+  font-size: var(--t-lead);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-stretch: 118%;
+  line-height: 1;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.nav a {
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+/* 현재 위치는 밑줄로만 표시한다. 굵기나 색을 바꾸면 나머지가 눌린다. */
+.nav a[aria-current] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.count {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}

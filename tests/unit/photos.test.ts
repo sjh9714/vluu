@@ -11,9 +11,23 @@ describe('사진 목록', () => {
     for (const photo of PHOTO_LIST) expect(getPhoto(photo.slug)?.key).toBe(photo.key)
   })
 
-  it('시간순으로 정렬된다', () => {
-    const times = PHOTO_LIST.map((p) => p.exif.shotAt || `${p.exif.shotDate}T00:00:00`)
-    expect(times).toEqual([...times].sort())
+  it('날짜순으로 정렬된다', () => {
+    const dates = PHOTO_LIST.map((p) => p.exif.shotDate)
+    expect(dates).toEqual([...dates].sort())
+  })
+
+  it('같은 날 안에서는 촬영 시각순이다', () => {
+    const known = PHOTO_LIST.filter((p) => p.exif.shotAt).map((p) => p.exif.shotAt)
+    expect(known).toEqual([...known].sort())
+  })
+
+  it('촬영 시각을 모르는 프레임은 그날의 끝에 온다', () => {
+    // 앞에 두면 시각을 모른다는 이유만으로 노선의 첫 장이 되어버린다.
+    for (const [index, photo] of PHOTO_LIST.entries()) {
+      if (photo.exif.shotAt) continue
+      const after = PHOTO_LIST.slice(index + 1).filter((p) => p.exif.shotDate === photo.exif.shotDate)
+      expect(after.every((p) => !p.exif.shotAt), photo.key).toBe(true)
+    }
   })
 
   it('현지 시각으로 읽는다 — 새벽에 찍힌 프레임은 없다', () => {
