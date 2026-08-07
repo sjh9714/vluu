@@ -10,3 +10,12 @@
   z-index: var(--z-gl);
   pointer-events: none;
 }
+
+/*
+ * 모달이 열리면 캔버스가 베일 위로 올라간다. 그래야 모달의 사진을 그릴 수 있다.
+ * 이때 GL은 그 한 장만 그린다 (gl/stage.ts) — 안 그러면 뒤 그리드 68장이
+ * 베일 위로 튀어나온다.
+ */
+:global([data-gl-solo]) .canvas {
+  z-index: var(--z-overlay-gl);
+}

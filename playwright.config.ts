@@ -28,10 +28,27 @@ export default defineConfig({
     // GL이 없는 환경에서 사이트가 온전한지가 여기서 확인된다.
     { name: 'mobile', use: { ...devices['iPhone 15 Pro'] } },
   ],
+  /*
+   * 워커를 CPU 절반까지 풀면 한 대의 서버에 68장짜리 페이지 요청이 몰려
+   * 응답이 잘리고("Unexpected end of JSON input") 하이드레이션이 죽는다.
+   * 제품 문제가 아니라 부하 문제이므로 여기서 막는다.
+   */
+  workers: process.env.CI ? 2 : 3,
+
   webServer: {
-    command: `pnpm exec next dev --port ${PORT}`,
+    /*
+     * 개발 서버가 아니라 **실제로 배포되는 빌드**를 상대로 돈다.
+     * dev는 요청받은 순간 컴파일하므로 첫 방문마다 타이밍이 흔들리고,
+     * 무엇보다 프로덕션에서만 나타나는 문제를 못 잡는다.
+     */
+    command: `pnpm build && pnpm exec next start --port ${PORT}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    /*
+     * 살아있는 서버를 재사용하지 않는다. 이번 작업에서 낡은 서버가 옛 코드를
+     * 그대로 내보내 테스트가 통과한 적이 두 번 있었다. 매번 새로 굽는 값이
+     * 그 착각의 값보다 싸다.
+     */
+    reuseExistingServer: false,
+    timeout: 180_000,
   },
 })

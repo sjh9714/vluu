@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import type { Photo } from '#content/types'
 import { frameLabel } from '@/lib/grid'
 import { date as fmtDate } from '@/lib/format'
+import { PhotoPicture } from './photo-picture'
 import styles from './frame.module.css'
 
 /**
@@ -33,11 +34,6 @@ export function Frame({
   className?: string
   style?: CSSProperties
 }) {
-  const base = `/media/${photo.key}`
-  const avif = photo.widths.map((w) => `${base}/${w}.avif ${w}w`).join(', ')
-  const webp = photo.webpWidths.map((w) => `${base}/${w}.webp ${w}w`).join(', ')
-  const fallbackWidth = photo.webpWidths.at(-1) ?? photo.widths.at(-1)
-
   return (
     <div
       className={className}
@@ -51,21 +47,7 @@ export function Frame({
     >
       <Link href={`/p/${photo.slug}`} className={styles.link} data-photo={photo.key}>
         <figure className={styles.frame} style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
-          <picture>
-            <source type="image/avif" srcSet={avif} sizes={sizes} />
-            <img
-              className={styles.image}
-              src={`${base}/${fallbackWidth}.webp`}
-              srcSet={webp}
-              sizes={sizes}
-              alt={photo.alt}
-              width={photo.width}
-              height={photo.height}
-              loading={priority ? 'eager' : 'lazy'}
-              fetchPriority={priority ? 'high' : 'auto'}
-              decoding="async"
-            />
-          </picture>
+          <PhotoPicture photo={photo} sizes={sizes} className={styles.image} priority={priority} />
           {photo.live ? <span className={styles.live} aria-hidden="true" /> : null}
         </figure>
       </Link>

@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import type { Photo, Route } from '#content/types'
 import * as fmt from '@/lib/format'
 import { frameLabel } from '@/lib/grid'
 import { FRAME_TOTAL, frameNumber } from '@/lib/photos'
 import { LiveFrame } from './live-frame'
+import { PhotoPicture } from './photo-picture'
 import styles from './viewer-stage.module.css'
 
 function Fact({ label, value }: { label: string; value: string | null }) {
@@ -34,10 +34,6 @@ export function ViewerStage({
   previous: Photo | undefined
   next: Photo | undefined
 }) {
-  const base = `/media/${photo.key}`
-  const avif = photo.widths.map((w) => `${base}/${w}.avif ${w}w`).join(', ')
-  const webp = photo.webpWidths.map((w) => `${base}/${w}.webp ${w}w`).join(', ')
-  const fallbackWidth = photo.webpWidths.at(-1) ?? photo.widths.at(-1)
   const number = frameNumber(photo.slug)
 
   return (
@@ -56,20 +52,12 @@ export function ViewerStage({
           data-photo={photo.key}
           style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
         >
-          <picture>
-            <source type="image/avif" srcSet={avif} sizes="(max-width: 860px) 100vw, 70vw" />
-            <img
-              className={styles.image}
-              src={`${base}/${fallbackWidth}.webp`}
-              srcSet={webp}
-              sizes="(max-width: 860px) 100vw, 70vw"
-              alt={photo.alt}
-              width={photo.width}
-              height={photo.height}
-              fetchPriority="high"
-              decoding="async"
-            />
-          </picture>
+          <PhotoPicture
+            photo={photo}
+            sizes="(max-width: 860px) 100vw, 70vw"
+            className={styles.image}
+            priority
+          />
           <LiveFrame photo={photo} />
         </figure>
       </div>
@@ -90,18 +78,28 @@ export function ViewerStage({
           <Fact label="Route" value={route?.title ?? null} />
         </dl>
 
+        {/*
+          여기만 next/link가 아니라 평범한 <a>다.
+
+          `@modal` 슬롯은 목적지가 `/p/[slug]`인 **모든 소프트 내비게이션**을 가로챈다.
+          출발지가 어디인지, 라우트 그룹이 다른지는 상관없다. 그래서 이 페이지에서
+          next/link로 다음 사진에 가면 전체 페이지 위에 모달이 또 열려 뷰어가 두 겹이 된다.
+
+          이 페이지는 공유 링크로 열리는 자리다. 여기서 이동한 결과도 공유 가능한
+          전체 페이지여야 하므로, 문서 이동이 의미상으로도 맞다.
+        */}
         <nav className={styles.moves} aria-label="Sequence">
           {previous ? (
-            <Link href={`/p/${previous.slug}`} rel="prev">
+            <a href={`/p/${previous.slug}`} rel="prev">
               ← {previous.title}
-            </Link>
+            </a>
           ) : (
             <span>← Start</span>
           )}
           {next ? (
-            <Link href={`/p/${next.slug}`} rel="next">
+            <a href={`/p/${next.slug}`} rel="next">
               {next.title} →
-            </Link>
+            </a>
           ) : (
             <span>End →</span>
           )}

@@ -1,0 +1,238 @@
+/*
+ * 사진 상세 모달.
+ *
+ * 겹침 순서가 이 파일의 핵심이다. WebGL 캔버스는 화면 전체를 덮는 fixed 엘리먼트라
+ * 모달 안에 넣을 수 없다. 그래서 베일과 내용을 형제로 갈라 그 사이에 캔버스를 끼운다.
+ *
+ *   veil    20   흰 베일 — 뒤 인덱스가 희미하게 남는다
+ *   canvas  21   GL — 모달의 그 한 장만 그린다 (gl-canvas.module.css)
+ *   shell   22   배경 없음. 화살표·캡션·닫기 버튼만
+ *
+ * shell에 배경이 없으므로 아래 캔버스가 그대로 비쳐 보이고, 크롬은 사진 위에 놓인다.
+ * GL이 꺼져 있으면 shell 안의 DOM <img>가 베일 위에 그려진다 — 폴백이 저절로 성립한다.
+ */
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  /*
+   * 완전히 가리지 않는다. 뒤에 인덱스가 남아 있다는 게 '닫을 수 있다'는 유일한 신호다.
+   * 다만 0.86에서는 뒷 사진들이 그대로 읽혀 주인공과 경쟁했다. 형태만 남고
+   * 내용은 안 읽히는 지점이 여기다.
+   */
+  background: rgba(255, 255, 255, 0.94);
+  animation: fade var(--t-base) var(--ease);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay-shell);
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: var(--s-7) var(--gutter) var(--s-5);
+  /* 배경 없음 — 아래 캔버스가 이 자리를 채운다 */
+
+  /*
+   * 화면 전체를 덮고 있으므로 클릭을 통과시켜야 한다.
+   * 안 그러면 빈 여백을 눌러도 베일에 닿지 않아 '바깥 클릭으로 닫기'가 통째로 죽는다.
+   * 실제로 눌러야 하는 것들만 다시 켠다.
+   */
+  pointer-events: none;
+}
+
+.shell :is(.box, .step, .close, .caption, details) {
+  pointer-events: auto;
+}
+
+/* ── 사진 ───────────────────────────────────────────────── */
+.plate {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+/*
+ * 비율은 인라인으로 받고, 높이와 폭 양쪽에서 조인다.
+ *
+ * 높이만 뷰포트 폭으로 묶으면(예전의 82vw) 좁은 화면에서 세로 사진의 폭이
+ * 뷰포트의 절반으로 쪼그라든다. 넉넉한 높이를 주고 `max-width`가 되받게 하면
+ * aspect-ratio가 높이를 다시 계산해준다 — 넓은 화면에서는 높이가, 좁은 화면에서는
+ * 폭이 제약이 된다.
+ */
+.box {
+  position: relative;
+  height: min(100%, 130vw);
+  max-width: 100%;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-image: var(--frame-lqip);
+  background-size: cover;
+}
+
+/* GL이 이 사진을 그릴 수 있게 되면 DOM 이미지는 물러난다. */
+:global([data-gl-ready]) .image {
+  opacity: 0;
+}
+
+/* ── 닫기 ───────────────────────────────────────────────── */
+.close {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--gutter);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: var(--rule-w) solid var(--rule-strong);
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.close:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ── 앞뒤 ───────────────────────────────────────────────── */
+.step {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  width: 40px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  font-size: var(--t-h3);
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease);
+}
+
+.step:hover {
+  color: var(--ink);
+}
+
+.prev {
+  left: max(var(--s-2), calc(var(--gutter) - var(--s-6)));
+}
+
+.next {
+  right: max(var(--s-2), calc(var(--gutter) - var(--s-6)));
+}
+
+/* ── 캡션 ───────────────────────────────────────────────── */
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-4);
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-mute);
+}
+
+.number {
+  color: var(--ink-faint);
+}
+
+.title {
+  font-family: var(--face-display);
+  font-size: var(--t-body);
+  letter-spacing: var(--tr-body);
+  color: var(--ink);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* 기본 삼각형을 지우고 직접 표시한다. 브라우저마다 모양이 다르고 화이트 큐브와 안 맞는다. */
+.more {
+  display: inline-block;
+  margin-top: var(--s-3);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  cursor: pointer;
+  border-bottom: 1px solid var(--rule-strong);
+  list-style: none;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.more::-webkit-details-marker {
+  display: none;
+}
+
+.more::after {
+  content: ' +';
+}
+
+details[open] .more::after {
+  content: ' −';
+}
+
+.more:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* ── 펼친 촬영정보 ──────────────────────────────────────── */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--s-2) var(--s-5);
+  margin-top: var(--s-4);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts div {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.facts dt {
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .shell {
+    padding: var(--s-6) var(--s-4) var(--s-4);
+  }
+
+  .step {
+    width: 32px;
+  }
+}

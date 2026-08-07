@@ -22,6 +22,8 @@ interface Tracked {
   readonly lqip: string
   readonly mesh: Mesh
   readonly texture: Texture
+  /** 모달 같은 오버레이 안에 있는가. 하나라도 있으면 그것만 그린다. */
+  readonly overlay: boolean
   /** 커서와의 거리. 프레임마다 계산해 그리기 직전에 프로그램으로 넘긴다. */
   focus: number
   /** DOM 이미지를 숨겼는지. 인계는 사진 하나하나 단위로 일어난다. */
@@ -166,6 +168,7 @@ export class GlStage {
         lqip,
         mesh,
         texture,
+        overlay: element.closest('[data-overlay]') !== null,
         focus: 1,
         handedOver: false,
       }
@@ -211,6 +214,7 @@ export class GlStage {
     window.removeEventListener('pointermove', this.onPointer)
     document.removeEventListener('click', this.onClick, true)
     delete document.documentElement.dataset['gl']
+    delete document.documentElement.dataset['glSolo']
     // 넘겨받았던 사진들을 DOM에 돌려준다. 폴백은 늘 그 자리에 있었다.
     for (const item of this.tracked) {
       item.handedOver = false
@@ -240,6 +244,7 @@ export class GlStage {
     velocity: [number, number]
     intensity: number
     morphing: string | null
+    solo: boolean
   } {
     return {
       tracked: this.tracked.length,
@@ -248,6 +253,7 @@ export class GlStage {
       velocity: [this.velocity.x, this.velocity.y],
       intensity: this.intensity,
       morphing: this.morph?.key ?? null,
+      solo: this.tracked.some((item) => item.overlay),
     }
   }
 
@@ -323,7 +329,28 @@ export class GlStage {
       }
     }
 
+    /*
+     * 모달이 열리면 그 한 장만 그린다.
+     *
+     * 캔버스는 화면 전체를 덮는 fixed 엘리먼트라 모달 안에 넣을 수 없다. 모달의 사진을
+     * 그리려면 캔버스가 베일보다 위로 올라가야 하는데, 그 상태에서 뒤쪽 그리드까지 그리면
+     * 68장이 베일 위로 튀어나온다. 그래서 나머지는 그리지 않고 **DOM 이미지로 돌려준다** —
+     * 안 그러면 베일 뒤에서 그리드가 통째로 사라진다.
+     */
+    const solo = this.tracked.some((item) => item.overlay)
+    if (solo) document.documentElement.dataset['glSolo'] = ''
+    else delete document.documentElement.dataset['glSolo']
+
     for (const item of this.tracked) {
+      if (solo && !item.overlay) {
+        item.mesh.visible = false
+        if (item.handedOver) {
+          item.handedOver = false
+          delete item.element.dataset['glReady']
+        }
+        continue
+      }
+
       let rect = item.element.getBoundingClientRect()
 
       /*

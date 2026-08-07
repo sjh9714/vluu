@@ -31,7 +31,8 @@ test('인덱스에서 사진을 눌러 뷰어로 간다', async ({ page }) => {
   const first = PHOTO_LIST[0]!
   await page.locator(`[data-photo="${first.key}"]`).click()
   await expect(page).toHaveURL(new RegExp(`/p/${first.slug}$`))
-  await expect(page.getByRole('heading', { level: 1, name: first.title })).toBeVisible()
+  // 이제 전체 페이지가 아니라 인덱스 위에 겹쳐 열린다. 제목은 대화상자의 이름표에 있다.
+  await expect(page.getByRole('dialog', { name: first.title })).toBeVisible()
 })
 
 test('Colophon의 수치는 실제 파일에서 나온다', async ({ page }) => {

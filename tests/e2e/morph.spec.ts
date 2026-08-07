@@ -46,11 +46,13 @@ test.describe('화면 간 모프', () => {
     await page.waitForTimeout(400)
 
     /*
-     * 뷰어에는 사진이 한 장뿐이다. 그런데도 풀이 인덱스 시절의 텍스처를 그대로 들고 있어야 한다 —
-     * 라우트마다 컨텍스트를 새로 만들면 이 숫자가 1로 떨어지고, 모프는 딛고 설 땅을 잃는다.
+     * 상세는 인덱스 위에 겹쳐 열리므로 인덱스의 프레임들도 계속 따라다닌다(68 + 모달 1).
+     * 중요한 건 풀이 이전 화면의 텍스처를 그대로 들고 있다는 것이다 —
+     * 라우트마다 컨텍스트를 새로 만들면 이 숫자가 떨어지고 모프는 딛고 설 땅을 잃는다.
      */
     const onViewer = await page.evaluate(() => window.__vluuGl!.inspect())
-    expect(onViewer.tracked, '뷰어는 한 장만 따라다닌다').toBe(1)
+    expect(onViewer.tracked, '모달이 열려도 인덱스는 그대로 남는다').toBeGreaterThan(1)
+    expect(onViewer.solo, '모달이 열렸으면 그 한 장만 그린다').toBe(true)
     expect(onViewer.textures, '풀은 이전 화면의 텍스처를 버리지 않는다').toBe(onIndex)
   })
 
@@ -63,7 +65,12 @@ test.describe('화면 간 모프', () => {
     await page.waitForURL(/\/p\//)
 
     // 텍스처가 이미 GPU에 있으므로 인계가 즉시 일어난다. 새로 받아야 했다면 여기서 시간이 걸린다.
-    await expect(page.locator('[data-photo]')).toHaveAttribute('data-gl-ready', '', { timeout: 1200 })
+    // 인덱스가 뒤에 남아 있으므로 모달 안쪽으로 범위를 좁힌다.
+    await expect(page.locator('[role="dialog"] [data-photo]')).toHaveAttribute(
+      'data-gl-ready',
+      '',
+      { timeout: 1200 },
+    )
   })
 
   test('모션을 끈 사용자에게는 모프가 없다', async ({ page }) => {

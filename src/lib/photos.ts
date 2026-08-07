@@ -96,6 +96,25 @@ export function getRouteOf(slug: string): Route | undefined {
   return routeOfPhoto.get(slug)
 }
 
+/**
+ * 이 사진의 앞뒤. **노선 안에서만** 움직인다 — 전체 목록으로 넘기면
+ * 여행이 끝나는 자리에서 다른 나라로 튀어버린다.
+ */
+export function getNeighbours(slug: string): {
+  route: Route | undefined
+  previous: Photo | undefined
+  next: Photo | undefined
+} {
+  const route = getRouteOf(slug)
+  const sequence = route?.photos ?? PHOTO_LIST
+  const at = sequence.findIndex((item) => item.slug === slug)
+  return {
+    route,
+    previous: at > 0 ? sequence[at - 1] : undefined,
+    next: at >= 0 ? sequence[at + 1] : undefined,
+  }
+}
+
 /** EXIF가 말하는 기종들. 카메라 전환 필터가 이 목록으로 만들어진다. */
 export const CAMERAS: readonly string[] = [
   ...new Set(PHOTO_LIST.map((p) => p.exif.camera).filter((c): c is string => c !== null)),

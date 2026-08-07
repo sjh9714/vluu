@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { ViewerStage } from '@/components/viewer-stage'
-import { PHOTO_LIST, getPhoto, getRouteOf } from '@/lib/photos'
+import { PHOTO_LIST, getNeighbours, getPhoto } from '@/lib/photos'
 
 export function generateStaticParams() {
   return PHOTO_LIST.map((photo) => ({ slug: photo.slug }))
@@ -37,22 +37,13 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
   const photo = getPhoto((await params).slug)
   if (!photo) notFound()
 
-  // 앞뒤는 노선 안에서만 움직인다. 전체 목록으로 넘기면 여행이 끝나는 자리에서
-  // 다른 나라로 튀어버린다.
-  const route = getRouteOf(photo.slug)
-  const sequence = route?.photos ?? PHOTO_LIST
-  const at = sequence.findIndex((item) => item.slug === photo.slug)
+  const { route, previous, next } = getNeighbours(photo.slug)
 
   return (
     <>
       <SiteHeader current={route?.slug} />
       <main>
-        <ViewerStage
-          photo={photo}
-          route={route}
-          previous={at > 0 ? sequence[at - 1] : undefined}
-          next={at >= 0 ? sequence[at + 1] : undefined}
-        />
+        <ViewerStage photo={photo} route={route} previous={previous} next={next} />
       </main>
     </>
   )

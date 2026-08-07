@@ -10,6 +10,13 @@ import type { GlStage } from './stage'
 export interface GlHandle {
   setIntensity(value: number): void
   inspect(): ReturnType<GlStage['inspect']>
+  /**
+   * 이 사진이 지금 있는 자리를 기억해둔다. 다음 화면에서 거기서부터 이어 그린다.
+   *
+   * 열 때는 GL이 클릭을 직접 듣고 알아서 부르지만, 닫을 때는 계기가 DOM 밖에 있다 —
+   * Esc, 베일 클릭, 닫기 버튼. 그래서 모달이 사라지기 전에 자기 자리를 넘겨줘야 한다.
+   */
+  beginMorph(key: string, from: DOMRect): void
 }
 
 declare global {
@@ -22,6 +29,7 @@ export function publishHandle(stage: GlStage): void {
   window.__vluuGl = {
     setIntensity: (value) => stage.setIntensity(value),
     inspect: () => stage.inspect(),
+    beginMorph: (key, from) => stage.beginMorph(key, from),
   }
 }
 

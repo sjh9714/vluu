@@ -254,6 +254,34 @@ export default async function ColophonPage() {
         </section>
 
         <section className={styles.section}>
+          <h2>Opening a photograph without leaving the page</h2>
+          <p>
+            Clicking a frame opens it over the index rather than replacing it. The URL still changes to{' '}
+            <code>/p/…</code>, so the address remains shareable; refresh it and the full page renders
+            instead. That split comes from intercepting and parallel routes — the modal is a route, not
+            a piece of component state, so the back button closes it and a pasted link never opens a
+            dialog with nothing behind it.
+          </p>
+          <p>
+            Two things resisted. The canvas is a single fixed element covering the viewport, so it
+            cannot live inside the modal — it has to sit <em>between</em> the veil and the modal&rsquo;s
+            controls, and while a photograph is open the layer draws that one frame and hands the rest
+            of the grid back to the DOM. And interception keys off the destination, not the origin:
+            paging between two full photo pages was still being intercepted, stacking a modal on top of
+            a viewer. Moving the route into its own group did not help, because route groups are not
+            segments. The fix was to stop pretending — on the shareable page the neighbour links are
+            plain anchors that load a document.
+          </p>
+          <p>
+            <code>&lt;dialog&gt;</code> would have supplied the focus trap, the Escape key and the
+            backdrop for free, but it renders in the top layer, above every z-index, which would bury
+            the canvas drawing the photograph. So the shell is hand-built and the platform still does
+            the hard part: <code>inert</code> on the background means focus cannot leave, without a
+            single line of trap logic.
+          </p>
+        </section>
+
+        <section className={styles.section}>
           <h2>Decisions worth arguing with</h2>
           <p>
             <strong>There is no dark theme.</strong> A white cube is the concept, not a default — the
