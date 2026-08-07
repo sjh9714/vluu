@@ -51,6 +51,22 @@
   list-style: none;
 }
 
+/*
+ * 폰에서는 두 칸씩 간다.
+ *
+ * auto-fill에 맡기면 393px 화면에서 한 줄에 한 칸이 되고, 칸이 여섯이면 도면이
+ * 페이지의 3분의 2를 차지한다 — 실측 2064px 대 사진 스트립 498px. 사진 보러 온
+ * 페이지에서 도면이 사진의 네 배를 먹는 건 순서가 뒤집힌 것이다.
+ *
+ * 칸이 절반으로 줄어도 그림은 살아남는다. 형태를 읽는 그림이지 값을 읽는 그림이 아니다.
+ */
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-4) var(--s-3);
+  }
+}
+
 .cell {
   min-width: 0;
 }
@@ -105,13 +121,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.scaleLabel {
-  fill: var(--ink-faint);
-  font-family: var(--face-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-}
-
 /* — 칸 아래 이름표. 도면이 감춰져 있으므로 여기가 읽히는 내용이다. */
 
 .label {
@@ -144,8 +153,16 @@
   padding-left: var(--s-2);
 }
 
-.date {
+/*
+ * 날짜와 축척. 축척 숫자가 여기 있는 이유는 SVG 안에 두면 칸이 좁아질 때 같이 줄어들어
+ * 폰에서 5px짜리 글자가 되기 때문이다. 막대는 그림이라 줄어도 뜻이 남는다.
+ */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
   font-family: var(--face-mono);
   font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }

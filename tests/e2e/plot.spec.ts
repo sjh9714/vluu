@@ -64,17 +64,44 @@ test('하루마다 자기 축척으로 그린다', async ({ page }) => {
    * 도쿄의 38장이 한구석에 뭉쳤다. 하루씩 나눈 게 그 해결이므로, 칸마다
    * **서로 다른** 축척이 붙어 있는지가 그 해결이 살아있다는 증거다.
    */
+  /*
+   * 축척 숫자는 SVG가 아니라 칸 아래 글에 있다. 안에 두면 칸이 좁아질 때 같이 줄어들어
+   * 폰에서 5px짜리 글자가 된다 — 막대는 그림이라 줄어도 뜻이 남지만 숫자는 아니다.
+   */
   const labels = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-route-plot] svg')].map((svg) => {
-      const texts = [...svg.querySelectorAll('text')].map((t) => t.textContent ?? '')
-      return texts.find((t) => /\d\s*(km|m)$/.test(t) || t === 'one place') ?? null
-    }),
+    [...document.querySelectorAll('[data-route-plot] li')].map(
+      (cell) =>
+        [...cell.querySelectorAll('p:last-of-type span')]
+          .map((s) => s.textContent ?? '')
+          .find((t) => /^\d[\d.]*\s*(km|m)$/.test(t)) ?? null,
+    ),
   )
 
   const days = labels.slice(1) // 첫 칸은 개요다
   expect(days.length).toBe(getRoute('kanto')!.legs.length)
   expect(days.every(Boolean), '축척이 없는 칸이 있다').toBe(true)
   expect(new Set(days).size, '모든 날이 같은 축척이면 나눈 의미가 없다').toBeGreaterThan(1)
+})
+
+test('폰에서 도면이 사진을 압도하지 않는다', async ({ page, isMobile }) => {
+  test.skip(!isMobile, '좁은 화면의 비율 문제다')
+  await page.goto('/c/kanto')
+
+  /*
+   * 한 줄에 한 칸씩 쌓였을 때 실측: 도면 2064px 대 사진 스트립 498px — 페이지의 67%가
+   * 도면이었다. 사진 보러 온 페이지에서 도면이 사진의 네 배를 먹는 건 순서가 뒤집힌 것이다.
+   */
+  const { columns, share } = await page.evaluate(() => {
+    const plot = document.querySelector('[data-route-plot]')!
+    const grid = plot.querySelector('ol')!
+    return {
+      columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+      share: plot.getBoundingClientRect().height / document.documentElement.scrollHeight,
+    }
+  })
+
+  expect(columns, '좁은 화면에서 한 줄에 한 칸씩 쌓이고 있다').toBe(2)
+  expect(share, `도면이 페이지의 ${Math.round(share * 100)}%다`).toBeLessThan(0.5)
 })
 
 test('스트립을 굴리면 도면의 표시가 따라온다', async ({ page }) => {

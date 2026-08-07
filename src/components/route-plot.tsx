@@ -77,26 +77,24 @@ export function RoutePlot({ route }: { route: Route }) {
 
       <ol className={styles.grid}>
         {overview ? (
-          <li className={styles.cell}>
-            <Plate groups={days.map((d) => d.photos)} numbered />
-            <p className={styles.label}>
-              <b>All</b>
-              <span className={styles.title}>{days.length} days</span>
-              <span className={styles.count}>{located.length}</span>
-            </p>
-          </li>
+          <Cell
+            groups={days.map((d) => d.photos)}
+            numbered
+            mark="All"
+            title={`${days.length} days`}
+            count={located.length}
+          />
         ) : null}
 
         {days.map(({ leg, number, photos }) => (
-          <li key={leg.date} className={styles.cell}>
-            <Plate groups={[photos]} />
-            <p className={styles.label}>
-              <b>{number}</b>
-              <span className={styles.title}>{leg.title}</span>
-              <span className={styles.count}>{photos.length}</span>
-            </p>
-            <p className={styles.date}>{fmt.date(leg.date)}</p>
-          </li>
+          <Cell
+            key={leg.date}
+            groups={[photos]}
+            mark={String(number)}
+            title={leg.title}
+            date={fmt.date(leg.date) ?? undefined}
+            count={photos.length}
+          />
         ))}
       </ol>
     </section>
@@ -104,12 +102,29 @@ export function RoutePlot({ route }: { route: Route }) {
 }
 
 /**
- * 한 칸. 무리(=하루)마다 따로 잇는다.
+ * 한 칸 — 그림과 그 아래 두 줄.
  *
- * 좌표가 한 자리뿐이면 선을 그리지 않는다 — 없는 이동을 그리는 것이고, 축척 바도
+ * 축척 숫자는 **SVG 밖의 글로 둔다.** 안에 넣으면 칸이 좁아질 때 같이 줄어들어
+ * 폰에서 5px짜리 글자가 된다. 막대는 그림이라 줄어도 뜻이 남지만 숫자는 아니다.
+ *
+ * 좌표가 한 자리뿐이면 선을 그리지 않는다 — 없는 이동을 그리는 것이고, 축척도
  * 뜻이 없다. 강화가 정확히 그 경우다.
  */
-function Plate({ groups, numbered = false }: { groups: readonly (readonly Photo[])[]; numbered?: boolean }) {
+function Cell({
+  groups,
+  numbered = false,
+  mark,
+  title,
+  date,
+  count,
+}: {
+  groups: readonly (readonly Photo[])[]
+  numbered?: boolean
+  mark: string
+  title: string
+  date?: string
+  count: number
+}) {
   const flat = groups.flat()
   const plot = project(
     flat.map((p) => gps(p)!),
@@ -121,6 +136,34 @@ function Plate({ groups, numbered = false }: { groups: readonly (readonly Photo[
   flat.forEach((photo, i) => at.set(photo.key, placed.points[i]!))
 
   const step = plot.degenerate ? 0 : niceStep(plot.kmPerUnit)
+
+  return (
+    <li className={styles.cell}>
+      <Plate {...{ groups, numbered, at, plot, placed, step }} />
+      <p className={styles.label}>
+        <b>{mark}</b>
+        <span className={styles.title}>{title}</span>
+        <span className={styles.count}>{count}</span>
+      </p>
+      <p className={styles.foot}>
+        {date ? <span>{date}</span> : null}
+        <span>{step > 0 ? formatKm(step) : 'one place'}</span>
+      </p>
+    </li>
+  )
+}
+
+interface PlateProps {
+  groups: readonly (readonly Photo[])[]
+  numbered: boolean
+  at: Map<string, { x: number; y: number }>
+  plot: ReturnType<typeof project>
+  placed: ReturnType<typeof fit>
+  step: number
+}
+
+function Plate({ groups, numbered, at, plot, placed, step }: PlateProps) {
+  const flat = groups.flat()
 
   return (
     <svg
@@ -187,26 +230,20 @@ function Plate({ groups, numbered = false }: { groups: readonly (readonly Photo[
         )
       })}
 
+      {/* 막대만. 이게 몇 km인지는 칸 아래 글에 있다 — 거기서는 줄어들어도 읽힌다. */}
       {step > 0 ? (
-        <g transform={`translate(${PAD} ${BOX.h - 10})`}>
+        <g transform={`translate(${PAD} ${BOX.h - 12})`}>
           <line className={styles.tick} x1={0} y1={0} x2={step * placed.unitsPerKm} y2={0} />
-          <line className={styles.tick} x1={0} y1={-3.5} x2={0} y2={3.5} />
+          <line className={styles.tick} x1={0} y1={-4} x2={0} y2={4} />
           <line
             className={styles.tick}
             x1={step * placed.unitsPerKm}
-            y1={-3.5}
+            y1={-4}
             x2={step * placed.unitsPerKm}
-            y2={3.5}
+            y2={4}
           />
-          <text className={styles.scaleLabel} x={step * placed.unitsPerKm + 7} y={3.5}>
-            {formatKm(step)}
-          </text>
         </g>
-      ) : (
-        <text className={styles.scaleLabel} x={PAD} y={BOX.h - 8}>
-          one place
-        </text>
-      )}
+      ) : null}
     </svg>
   )
 }

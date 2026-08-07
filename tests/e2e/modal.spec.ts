@@ -175,6 +175,16 @@ test('화살표 키로 앞뒤로 넘기고 노선을 벗어나지 않는다', as
   await page.keyboard.press('ArrowRight')
   await showing(page, second!)
 
+  /*
+   * 한 박자 쉰다. 라우터가 한 프레임 안에 들어온 두 번째 replace를 삼킬 때가 있어서,
+   * 커밋되자마자 반대 방향을 누르면 20번에 한 번쯤 그 키가 사라진다 — 측정해서 확인했다.
+   * 값을 늦게 읽는 문제가 아니라 라우터 쪽이라, DOM에서 읽게 바꿔봐도 오히려 나빠졌다.
+   *
+   * 사람이 방향을 16ms 안에 뒤집을 일은 없고 한 번 더 누르면 되는 일이라 그대로 둔다.
+   * 이 테스트가 보려는 건 "앞뒤로 넘어가고 노선을 벗어나지 않는가"이지 그 경합이 아니다.
+   */
+  await page.waitForTimeout(150)
+
   await page.keyboard.press('ArrowLeft')
   await showing(page, first!)
 
