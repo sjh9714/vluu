@@ -7,6 +7,27 @@ import { expect, test } from '@playwright/test'
  * 데스크톱 Chromium만 본다 — 헤드리스 WebKit에는 쓸 만한 WebGL이 없고,
  * 없는 환경에서 폴백으로 내려가는 것 자체가 올바른 동작이다.
  */
+test('손가락으로 굴리는 화면에서는 아예 켜지 않는다', async ({ page, isMobile }) => {
+  test.skip(!isMobile, '터치 기기의 이야기다')
+  await page.goto('/')
+  await page.waitForTimeout(800)
+
+  /*
+   * 폰에서 이 레이어는 얻는 게 없다 — 인덱스는 스크롤 왜곡을 안 받고 커서 반응은
+   * 커서가 있어야 돈다. 그런데 잃을 건 있다: 캔버스는 fixed이고 자리는 rAF에서 JS가
+   * 잡는데 스크롤은 컴포지터가 굴리므로, 튕기는 동안 사진이 테두리 안에서 떤다.
+   */
+  const state = await page.evaluate(() => ({
+    gl: document.documentElement.dataset['gl'] ?? null,
+    off: document.documentElement.dataset['glOff'] ?? null,
+    opacity: getComputedStyle(document.querySelector('[data-photo] img')!).opacity,
+  }))
+  expect(state.gl).toBeNull()
+  expect(state.off).toBe('touch')
+  // 폴백은 열화판이 아니다 — DOM 사진이 그대로 보인다.
+  expect(state.opacity).toBe('1')
+})
+
 test.describe('WebGL 레이어', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium에서만 WebGL을 켠다')
 

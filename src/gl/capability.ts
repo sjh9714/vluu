@@ -16,6 +16,25 @@ export function canRunGl(): GlVerdict {
     return { on: false, because: 'reduced-motion' }
   }
 
+  /*
+   * 손가락으로 굴리는 화면에서는 켜지 않는다.
+   *
+   * 두 가지가 겹친다.
+   *
+   * **얻는 게 없다.** 아카이브 인덱스는 스크롤 왜곡을 받지 않고(`data-gl-motion` 밖),
+   * 커서 반응은 `(hover: hover)`가 있어야 돈다. 그래서 폰에서 이 레이어가 하는 일은
+   * 같은 사진을 같은 자리에 다시 그리는 것뿐이다.
+   *
+   * **잃을 게 있다.** 캔버스는 fixed이고 그 안의 자리는 rAF에서 JS가 잡는데, 네이티브
+   * 스크롤은 컴포지터가 굴린다. 손가락으로 튕기는 동안 둘은 원리적으로 어긋나고,
+   * 그러면 사진이 자기 테두리 안에서 위아래로 떤다.
+   *
+   * 얻는 게 0이고 잃는 게 있으면 켜지 않는 게 맞다. 꺼진 화면은 이미 완성되어 있다.
+   */
+  if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+    return { on: false, because: 'touch' }
+  }
+
   // 데이터 절약 모드. 텍스처를 굽는 건 이 사람이 요청한 게 아니다.
   const connection = (navigator as { connection?: { saveData?: boolean } }).connection
   if (connection?.saveData) return { on: false, because: 'save-data' }

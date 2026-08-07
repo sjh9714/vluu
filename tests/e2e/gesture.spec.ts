@@ -124,11 +124,18 @@ test('끌다 만 사진은 제자리로 돌아온다', async ({ page }) => {
 
   // 임계값 아래로 천천히 끌었다 놓는다.
   await swipe(photo, { dx: -40, dy: 0, ms: 600 })
-  await page.waitForTimeout(500)
 
-  const after = (await photo.boundingBox())!
-  expect(Math.abs(after.x - before.x), '사진이 밀린 채로 남았다').toBeLessThan(2)
-  expect(Math.abs(after.y - before.y)).toBeLessThan(2)
+  /*
+   * 돌아오는 데 걸리는 시간을 고정값으로 기다리지 않는다. 되돌림은 CSS 전환이라
+   * 기기와 부하에 따라 늘어나고, 실제로 부하가 걸린 실행에서 500ms가 모자라 12px가
+   * 남은 채로 잡혔다. 검사하려는 건 "얼마나 빨리"가 아니라 "결국 제자리로 오는가"다.
+   */
+  await expect
+    .poll(async () => {
+      const box = (await photo.boundingBox())!
+      return Math.round(Math.max(Math.abs(box.x - before.x), Math.abs(box.y - before.y)))
+    }, { timeout: 4000 })
+    .toBeLessThan(2)
 })
 
 test('마우스로 끄는 것은 제스처가 아니다', async ({ page }) => {
