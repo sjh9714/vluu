@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, type CSSProperties, type PointerEvent } from 'react'
 import type { Photo } from '#content/types'
 import * as fmt from '@/lib/format'
+import { follow, readGesture } from '@/lib/gesture'
 import { frameLabel } from '@/lib/grid'
 import { LiveFrame } from './live-frame'
 import { PhotoPicture } from './photo-picture'
@@ -33,6 +34,7 @@ export function PhotoModal({
   const router = useRouter()
   const shell = useRef<HTMLDivElement>(null)
   const box = useRef<HTMLElement>(null)
+  const veil = useRef<HTMLDivElement>(null)
 
   /**
    * 닫기 전에 지금 사진이 있는 자리를 GL에 넘긴다.
@@ -97,6 +99,91 @@ export function PhotoModal({
     return () => window.removeEventListener('keydown', onKey)
   }, [router])
 
+  /*
+   * 손가락으로 사진을 넘기고 닫는다.
+   *
+   * 지금까지 폰에서 사진을 넘기려면 32px짜리 `‹ ›`를 정확히 눌러야 했다. 그건 폰에서
+   * 사진을 넘기는 방법이 아니다 — 미는 게 그 방법이다.
+   *
+   * 마우스는 받지 않는다. 마우스 드래그는 클릭·선택과 싸우고, 데스크톱에는 이미
+   * 화살표 키와 버튼이 있다. 판정과 따라오는 양은 `@/lib/gesture`의 순수 함수가 정한다.
+   */
+  const drag = useRef<{ id: number; x: number; y: number; t: number; still: boolean } | null>(null)
+
+  const frame = () => ({ width: window.innerWidth, height: window.innerHeight })
+
+  const rest = (animate: boolean) => {
+    const plate = box.current
+    if (plate) {
+      plate.style.transition = animate ? `transform var(--t-base) var(--ease)` : 'none'
+      plate.style.transform = ''
+    }
+    if (veil.current) veil.current.style.opacity = ''
+  }
+
+  const onPointerDown = (event: PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'mouse' || !event.isPrimary) return
+    drag.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      t: event.timeStamp,
+      // 모션을 끈 사람에게는 따라오는 연출만 뺀다. 넘기는 기능 자체는 연출이 아니다.
+      still: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    }
+    /*
+     * 캡처는 손가락이 사진 밖으로 나가도 이벤트가 계속 오게 한다. 없으면 크게 끌 때
+     * 중간에 끊긴다 — 있으면 좋은 것이지 없으면 안 되는 것은 아니다. 브라우저가 모르는
+     * 포인터(합성 이벤트, 이미 끝난 손가락)면 던지므로 여기서 막는다.
+     */
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* 캡처 없이도 판정은 그대로 돈다 */
+    }
+    if (box.current) box.current.style.transition = 'none'
+  }
+
+  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
+    const held = drag.current
+    if (!held || held.id !== event.pointerId || held.still) return
+    const shift = follow(
+      { dx: event.clientX - held.x, dy: event.clientY - held.y, ms: event.timeStamp - held.t },
+      frame(),
+    )
+    if (box.current) box.current.style.transform = `translate(${shift.x}px, ${shift.y}px)`
+    if (veil.current) veil.current.style.opacity = String(shift.veil)
+  }
+
+  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
+    const held = drag.current
+    drag.current = null
+    if (!held || held.id !== event.pointerId) return
+
+    const gesture = readGesture(
+      { dx: event.clientX - held.x, dy: event.clientY - held.y, ms: event.timeStamp - held.t },
+      frame(),
+    )
+
+    /*
+     * 닫기는 원위치시키지 않고 그대로 넘긴다. close()가 지금 rect를 재서 GL에 주는데,
+     * getBoundingClientRect()는 transform을 반영하므로 **끌던 자리에서** 그리드로 이어진다.
+     */
+    if (gesture === 'close') {
+      close()
+      return
+    }
+
+    rest(true)
+    if (gesture === 'prev' && previous) router.replace(`/p/${previous.slug}`)
+    if (gesture === 'next' && next) router.replace(`/p/${next.slug}`)
+  }
+
+  const onPointerCancel = () => {
+    drag.current = null
+    rest(true)
+  }
+
   const facts: Array<[string, string | null]> = [
     ['Frame', number ? `${frameLabel(number)} / ${frameLabel(total)}` : null],
     ['Place', photo.place ?? null],
@@ -111,7 +198,7 @@ export function PhotoModal({
   return (
     <>
       {/* 바깥 클릭으로 닫힌다. 베일 자체가 그 판정 영역이다. */}
-      <div className={styles.veil} onClick={close} aria-hidden="true" />
+      <div ref={veil} className={styles.veil} onClick={close} aria-hidden="true" />
 
       <div
         ref={shell}
@@ -129,6 +216,10 @@ export function PhotoModal({
             className={styles.box}
             data-photo={photo.key}
             style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerCancel}
           >
             <PhotoPicture
               photo={photo}

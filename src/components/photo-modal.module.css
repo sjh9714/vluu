@@ -71,6 +71,14 @@
   position: relative;
   height: min(100%, 130vw);
   max-width: 100%;
+  /*
+   * 손가락 제스처를 우리가 읽는다. 브라우저가 먼저 팬으로 가져가면 pointermove가
+   * 중간에 끊겨 스와이프가 반쯤 먹는다. 모달은 어차피 뒤 스크롤을 잠근 상태다.
+   */
+  touch-action: none;
+  /* 사진을 끄는 동안 텍스트 선택 커서가 뜨면 끄는 게 아니라 긁는 것처럼 보인다. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .image {

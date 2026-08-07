@@ -399,6 +399,18 @@ under load    0.0078 – 0.0208   (2.7×)`}
             the hard part: <code>inert</code> on the background means focus cannot leave, without a
             single line of trap logic.
           </p>
+          <p>
+            On a phone the way to move between photographs was a 32-pixel arrow you had to hit exactly.
+            That is not how anyone turns a page. The photograph now takes the gesture: push sideways to
+            move through the sequence, pull down to dismiss. Thresholds are a fraction of the viewport
+            rather than a pixel count, so the same flick means the same thing on a phone and a tablet,
+            and a short fast one passes on speed where a long slow one passes on distance. Upward does
+            nothing on purpose — bind dismissal to both directions and lifting the picture to look
+            closer throws it away. The decision and the follow-along are pure functions with unit
+            tests, because a threshold you tune by feel is a threshold you should be able to shake
+            without a phone in your hand. Mouse pointers are ignored: dragging with a mouse fights
+            clicking and selecting, and the desktop already has arrow keys.
+          </p>
         </section>
 
         <section className={styles.section}>
