@@ -19,10 +19,13 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
-# 환경변수
+# 환경변수. .env.example은 커밋한다 — `.env*`로 뭉뚱그리면 그것까지 삼킨다.
 .env
 .env.local
 .env*.local
+
+# Vercel CLI가 링크 정보와 OIDC 토큰을 여기 둔다
+.vercel
 
 # OS / 에디터
 .DS_Store
