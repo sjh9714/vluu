@@ -43,21 +43,32 @@ export function ViewerStage({
       style={{ '--frame-lqip': `url("${photo.lqip}")` } as CSSProperties}
     >
       <div className={styles.plate}>
-        <picture>
-          <source type="image/avif" srcSet={avif} sizes="(max-width: 860px) 100vw, 70vw" />
-          <img
-            className={styles.image}
-            src={`${base}/${fallbackWidth}.webp`}
-            srcSet={webp}
-            sizes="(max-width: 860px) 100vw, 70vw"
-            alt={photo.alt}
-            width={photo.width}
-            height={photo.height}
-            fetchPriority="high"
-            decoding="async"
-          />
-        </picture>
-        <LiveFrame photo={photo} />
+        {/*
+          박스가 사진의 비율을 그대로 갖는다. object-fit으로 레터박스를 만들면
+          엘리먼트 rect와 실제 그림의 경계가 어긋나서, GL이 그 rect로 평면을 놓는 순간
+          모프가 사진이 아니라 빈 여백을 향해 날아간다.
+        */}
+        <figure
+          className={styles.plateBox}
+          data-photo={photo.key}
+          style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+        >
+          <picture>
+            <source type="image/avif" srcSet={avif} sizes="(max-width: 860px) 100vw, 70vw" />
+            <img
+              className={styles.image}
+              src={`${base}/${fallbackWidth}.webp`}
+              srcSet={webp}
+              sizes="(max-width: 860px) 100vw, 70vw"
+              alt={photo.alt}
+              width={photo.width}
+              height={photo.height}
+              fetchPriority="high"
+              decoding="async"
+            />
+          </picture>
+          <LiveFrame photo={photo} />
+        </figure>
       </div>
 
       <div className={styles.meta}>

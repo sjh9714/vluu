@@ -35,6 +35,18 @@ const REST = 0.0004
 /** 탭이 백그라운드에 있다 돌아오면 delta가 몇 초씩 튄다. 그 한 프레임에 전부 날리지 않는다. */
 const MAX_DELTA_MS = 100
 
+/** 모프 길이. 화이트 큐브의 이징 그대로 — 빠르게 떠나 천천히 안착한다. */
+const MORPH_MS = 620
+/** cubic-bezier(0.16, 1, 0.3, 1)에 가까운 감쇠. 바운스 없음. */
+const easeOut = (t: number): number => 1 - (1 - t) ** 4
+
+interface PendingMorph {
+  readonly key: string
+  readonly from: { x: number; y: number; width: number; height: number }
+  /** 새 화면에 그 사진이 나타난 순간에 시작한다. 클릭 시각이 아니라. */
+  startedAt: number
+}
+
 /** `url("data:...")` 에서 URL만 꺼낸다. LQIP는 CSS 변수로 이미 DOM에 있다. */
 function readCssUrl(value: string): string | null {
   const match = value.trim().match(/^url\(["']?(.+?)["']?\)$/)
@@ -62,6 +74,7 @@ export class GlStage {
   private pointer = { x: -9999, y: -9999 }
   private intensity = 1
   private running = false
+  private morph: PendingMorph | null = null
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new Renderer({
@@ -105,6 +118,29 @@ export class GlStage {
     }
     this.tracked.length = 0
     this.mount(root)
+
+    /*
+     * 모프의 시계는 여기서 출발한다. 클릭 시각에 맞추면 이동이 조금만 늦어져도
+     * 새 화면이 그려지기 전에 애니메이션이 끝나 아무 일도 안 일어난 것처럼 보인다.
+     * 넘어온 사진이 실제로 새 화면에 있을 때만 살린다.
+     */
+    if (this.morph) {
+      const arrived = this.tracked.some((item) => item.key === this.morph?.key)
+      if (arrived) this.morph.startedAt = performance.now()
+      else this.morph = null
+    }
+  }
+
+  /**
+   * 이 사진이 지금 있는 자리를 기억해둔다. 다음 화면에서 여기서부터 이어 그린다.
+   * 텍스처는 이미 GPU에 있으므로 전환 중에 이미지를 다시 받는 일이 없다.
+   */
+  beginMorph(key: string, from: DOMRect): void {
+    this.morph = {
+      key,
+      from: { x: from.left, y: from.top, width: from.width, height: from.height },
+      startedAt: 0,
+    }
   }
 
   /** DOM에서 `[data-photo]`를 찾아 각각에 평면을 하나씩 붙인다. */
@@ -161,6 +197,8 @@ export class GlStage {
 
     window.addEventListener('resize', this.resize, { passive: true })
     window.addEventListener('pointermove', this.onPointer, { passive: true })
+    // 캡처 단계에서 듣는다. 라우터가 화면을 갈아치우기 전에 지금 자리를 재야 한다.
+    document.addEventListener('click', this.onClick, true)
     document.documentElement.dataset['gl'] = 'on'
     this.raf = requestAnimationFrame(this.frame)
   }
@@ -171,6 +209,7 @@ export class GlStage {
     cancelAnimationFrame(this.raf)
     window.removeEventListener('resize', this.resize)
     window.removeEventListener('pointermove', this.onPointer)
+    document.removeEventListener('click', this.onClick, true)
     delete document.documentElement.dataset['gl']
     // 넘겨받았던 사진들을 DOM에 돌려준다. 폴백은 늘 그 자리에 있었다.
     for (const item of this.tracked) {
@@ -200,6 +239,7 @@ export class GlStage {
     promoted: number
     velocity: [number, number]
     intensity: number
+    morphing: string | null
   } {
     return {
       tracked: this.tracked.length,
@@ -207,6 +247,7 @@ export class GlStage {
       promoted: this.pool.promoted,
       velocity: [this.velocity.x, this.velocity.y],
       intensity: this.intensity,
+      morphing: this.morph?.key ?? null,
     }
   }
 
@@ -226,6 +267,26 @@ export class GlStage {
 
   private readonly onPointer = (event: PointerEvent): void => {
     this.pointer = { x: event.clientX, y: event.clientY }
+  }
+
+  /**
+   * 사진을 눌러 다른 화면으로 갈 때, 지금 있는 자리를 재둔다.
+   *
+   * 새 탭·수정키 조합은 건드리지 않는다 — 이 화면이 그대로 남아 있는데
+   * 사진만 어딘가로 날아가면 그건 전환이 아니라 오작동이다.
+   */
+  private readonly onClick = (event: MouseEvent): void => {
+    if (event.defaultPrevented || event.button !== 0) return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+    const target = event.target
+    if (!(target instanceof Element)) return
+    const holder = target.closest<HTMLElement>('[data-photo]')
+    const key = holder?.dataset['photo']
+    if (!holder || !key) return
+    if (!this.tracked.some((item) => item.key === key)) return
+
+    this.beginMorph(key, holder.getBoundingClientRect())
   }
 
   private readonly frame = (now: number): void => {
@@ -252,8 +313,35 @@ export class GlStage {
     if (Math.abs(this.velocity.x) < REST) this.velocity.x = 0
     if (Math.abs(this.velocity.y) < REST) this.velocity.y = 0
 
+    // 모프가 끝났으면 치운다. 진행 중이면 진행률을 구해둔다.
+    let morphT = 1
+    if (this.morph) {
+      if (this.morph.startedAt === 0) morphT = 0
+      else {
+        morphT = Math.min(1, (now - this.morph.startedAt) / MORPH_MS)
+        if (morphT >= 1) this.morph = null
+      }
+    }
+
     for (const item of this.tracked) {
-      const rect = item.element.getBoundingClientRect()
+      let rect = item.element.getBoundingClientRect()
+
+      /*
+       * 넘어온 사진은 이전 화면에서 있던 자리부터 출발해 지금 자리로 이어진다.
+       * DOMRect를 직접 섞는다 — 텍스처도 메시도 그대로이므로 전환 중에
+       * 이미지를 다시 받거나 다시 올리는 일이 전혀 없다.
+       */
+      if (this.morph?.key === item.key && morphT < 1) {
+        const k = easeOut(morphT)
+        const from = this.morph.from
+        const lerp = (a: number, b: number) => a + (b - a) * k
+        rect = new DOMRect(
+          lerp(from.x, rect.left),
+          lerp(from.y, rect.top),
+          lerp(from.width, rect.width),
+          lerp(from.height, rect.height),
+        )
+      }
 
       /*
        * 화면 위아래로 반 화면까지만 살린다.
