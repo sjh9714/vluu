@@ -9,11 +9,14 @@ import styles from './site-header.module.css'
 export function SiteHeader({ current }: { current?: string }) {
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.wordmark}>
+      {/* 여는 장면의 첫 박자 — 이 선이 좌에서 우로 그어진다. */}
+      <span className={`${styles.rule} vluu-rule`} aria-hidden="true" />
+
+      <Link href="/" className={`${styles.wordmark} vluu-open-1`}>
         VLUU
       </Link>
 
-      <nav className={styles.nav} aria-label="Routes">
+      <nav className={`${styles.nav} vluu-open-2`} aria-label="Routes">
         <Link href="/" aria-current={current === 'index' ? 'page' : undefined}>
           Index
         </Link>
@@ -32,7 +35,7 @@ export function SiteHeader({ current }: { current?: string }) {
       </nav>
 
       <span className={styles.spacer} />
-      <span className={styles.count}>{PHOTO_LIST.length} frames</span>
+      <span className={`${styles.count} vluu-open-2`}>{PHOTO_LIST.length} frames</span>
     </header>
   )
 }

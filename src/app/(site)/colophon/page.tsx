@@ -370,6 +370,39 @@ under load    0.0078 – 0.0208   (2.7×)`}
           </p>
         </section>
 
+        <section className={styles.section}>
+          <h2>The motion is the subject</h2>
+          <p>
+            Fifty of the sixty-eight frames are Live Photos — each carries about three seconds of
+            video shot around the shutter. For most of this site&rsquo;s life that sat behind a play
+            button on the detail page, which is a strange place to keep the only moving thing you own.
+          </p>
+          <p>
+            It is now what the gallery moves with. Rest a cursor on a frame and that photograph comes
+            alive for three seconds and settles back; on a phone the frame that lands in the middle of
+            the screen plays, <strong>after scrolling stops</strong>. One at a time, never looping.
+            A grid where everything moves is not motion, it is noise — and motion that arrives while
+            you are still scrolling is the exact thing this site spent a week removing.
+          </p>
+          <p>
+            The restraint is mechanical, not stylistic. A single <code>&lt;video&gt;</code> element
+            moves between frames rather than fifty sitting in the document; nothing loads until the
+            cursor has stayed for 120 milliseconds, so sweeping across the grid does not pull
+            eighteen megabytes; reduced motion and data saver skip the layer entirely. While a frame
+            is breathing the WebGL layer stops distorting it — that photograph already has its motion
+            and does not need a second one.
+          </p>
+          <p>
+            <strong>The opening moves the chrome, not the photographs.</strong> A hairline draws
+            across the header, the wordmark and navigation settle, the title follows — around 700 ms,
+            all of it transform and opacity. Animating sixty-eight photographs into place would have
+            been the obvious version and it would have cost the thing this site is actually good at:
+            largest contentful paint lands because the first screen of pictures is painted
+            immediately, and a fade would spend that. Measured before and after, layout shift stayed
+            at zero and long tasks did not grow.
+          </p>
+        </section>
+
         <section className={styles.wide}>
           <h2>Drive it yourself</h2>
           <p>

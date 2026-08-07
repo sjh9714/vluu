@@ -32,6 +32,11 @@ interface Tracked {
    * 계속 일렁이면 그 목적과 정면으로 부딪친다. 인덱스에서 왜곡은 커서가 만든다.
    */
   readonly motion: boolean
+  /**
+   * Live Photo가 들어앉는 상자. 마운트할 때 한 번 찾아둔다 —
+   * 매 프레임 querySelector를 68번 도는 것보다 참조 하나가 낫다.
+   */
+  readonly liveBox: HTMLElement | null
   /** 커서와의 거리. 프레임마다 계산해 그리기 직전에 프로그램으로 넘긴다. */
   focus: number
   /** 커서가 이 사진 위에 있는 정도(0~1). 불리언으로 두면 들고 날 때 튄다. */
@@ -200,6 +205,7 @@ export class GlStage {
         texture,
         overlay: element.closest('[data-overlay]') !== null,
         motion: element.closest('[data-gl-motion]') !== null,
+        liveBox: element.querySelector<HTMLElement>('[data-live]'),
         focus: 1,
         hover: 0,
         handedOver: false,
@@ -480,8 +486,19 @@ export class GlStage {
         this.pointer.y >= rect.top &&
         this.pointer.y <= rect.bottom
 
+      /*
+       * Live Photo가 재생 중이면 이 프레임은 왜곡을 받지 않는다.
+       *
+       * 영상은 `--z-content`라 GL 위에 그려진다. 그 밑에서 사진만 3px 밀리면
+       * 정지된 영상 아래로 테두리가 어긋나 보인다. 무엇보다 그 프레임의 모션은
+       * 이미 영상이 맡고 있다 — 둘이 겹칠 이유가 없다.
+       */
+      const breathing = item.liveBox?.hasAttribute('data-live-playing') ?? false
+
       let target = { x: 0, y: 0 }
-      if (hovered) {
+      if (breathing) {
+        target = { x: 0, y: 0 }
+      } else if (hovered) {
         target = cursor
       } else if (item.motion && item.lastCenter) {
         target = {
@@ -498,7 +515,7 @@ export class GlStage {
       // 스크롤을 안 받는 사진도 위치는 계속 기억한다. 잊으면 `motion`이 켜지는 순간
       // 그동안 밀린 이동이 한 프레임에 몰린다.
       item.lastCenter = center
-      item.hover = advance(item.hover, hovered ? 1 : 0, elapsed)
+      item.hover = advance(item.hover, hovered && !breathing ? 1 : 0, elapsed)
 
       const speed = Math.hypot(item.velocity.x, item.velocity.y)
       if (speed > fastestSpeed) {

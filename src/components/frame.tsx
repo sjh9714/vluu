@@ -46,7 +46,16 @@ export function Frame({
       }
     >
       <Link href={`/p/${photo.slug}`} className={styles.link} data-photo={photo.key}>
-        <figure className={styles.frame} style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+        <figure
+          className={styles.frame}
+          style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+          /*
+           * Live Photo가 있는 프레임의 표시. `live-layer`가 이걸 보고 영상을 여기 넣는다.
+           * 상자에 다는 이유는 aspect-ratio와 overflow:hidden이 여기 있어서다 —
+           * 영상이 사진과 정확히 같은 자리에 잘려 앉는다.
+           */
+          data-live={photo.live ? photo.key : undefined}
+        >
           <PhotoPicture photo={photo} sizes={sizes} className={styles.image} priority={priority} />
           {photo.live ? <span className={styles.live} aria-hidden="true" /> : null}
         </figure>

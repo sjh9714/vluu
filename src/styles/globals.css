@@ -140,3 +140,68 @@ time,
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Live Photo가 재생되는 자리.
+ *
+ * 전역 클래스인 이유가 있다 — 이 `<video>`는 `live-layer`가 JS로 만들어 프레임 사이를
+ * 옮겨 다니므로, CSS Module이 붙여주는 해시 이름을 받을 수 없다. 화면에 나가는 규칙 중
+ * 이런 게 여기 하나 더 있다는 뜻이라, 대신 이름을 사이트 접두어로 못박아 둔다.
+ *
+ * 정지 이미지와 정확히 같은 자리에 같은 방식으로 앉는다. 조금이라도 어긋나면
+ * 재생이 시작되는 순간 사진이 튀어 보인다.
+ */
+.vluu-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 클릭·포커스는 아래 링크가 받는다. 영상은 그림일 뿐이다. */
+  pointer-events: none;
+}
+
+/*
+ * ── 열릴 때의 한 장면 ─────────────────────────────────────
+ *
+ * 도면이 그려지듯 크롬이 조립된다. 세 박자, 약 700ms.
+ *
+ * **사진은 건드리지 않는다.** LCP가 0.6초인 건 첫 화면 사진이 곧바로 칠해지기
+ * 때문이고 거기에 페이드를 걸면 그 숫자가 무너진다. 68장을 동시에 애니메이션하는 건
+ * "프레임 떨구는 아름다움은 입상 못 한다"에 정확히 걸린다.
+ *
+ * 여기 있는 건 헤어라인 하나와 글자 몇 개뿐이고 전부 transform/opacity라
+ * 컴포지터에서 돈다. `[data-opened]`가 붙으면 멈춘다 — components/opening.tsx가
+ * 한 번 돈 뒤에 붙이고, 그래서 인덱스로 돌아와도 다시 조립되지 않는다.
+ *
+ * 모션을 끈 사람에게는 위의 리셋이 이 전부를 0.01ms로 만든다. 그러면 최종 상태다.
+ */
+@keyframes vluu-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes vluu-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+html:not([data-opened]) .vluu-rule {
+  transform-origin: left center;
+  animation: vluu-draw 320ms var(--ease) both;
+}
+
+html:not([data-opened]) .vluu-open-1 {
+  animation: vluu-settle 360ms var(--ease) 120ms both;
+}
+
+html:not([data-opened]) .vluu-open-2 {
+  animation: vluu-settle 360ms var(--ease) 260ms both;
+}
+
+html:not([data-opened]) .vluu-open-3 {
+  animation: vluu-settle 380ms var(--ease) 320ms both;
+}

@@ -8,9 +8,24 @@
   gap: var(--s-3) var(--s-6);
   padding: var(--s-4) var(--gutter);
   background: var(--paper);
-  border-bottom: var(--rule-w) solid var(--rule);
+  /*
+   * 아래 선을 border가 아니라 별도 엘리먼트로 둔다. border는 scaleX로 그릴 수 없고,
+   * 여는 장면의 첫 박자가 이 선이 좌에서 우로 그어지는 것이다.
+   */
   /* 인덱스의 구간 헤더가 이 높이만큼 아래에 붙는다. 두 곳이 같은 값을 봐야 한다. */
   min-height: var(--chrome-h);
+  /* 아래 헤어라인이 여기 기준으로 앉는다. */
+  position: sticky;
+}
+
+/* 헤더 아래 헤어라인. `.vluu-rule`이 여는 장면에서 이걸 그린다. */
+.rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--rule-w);
+  background: var(--rule);
 }
 
 .wordmark {
