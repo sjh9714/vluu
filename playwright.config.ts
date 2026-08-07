@@ -3,7 +3,14 @@ import { defineConfig, devices } from '@playwright/test'
 // 이 프로젝트 전용 포트. 기본 3000은 다른 앱이 물고 있을 수 있고,
 // reuseExistingServer가 그걸 우리 서버로 착각해 엉뚱한 앱을 테스트한다.
 const PORT = Number(process.env.PORT ?? 4321)
-const baseURL = `http://127.0.0.1:${PORT}`
+
+/*
+ * 기본은 로컬에서 갓 구운 빌드. `E2E_BASE_URL`을 주면 이미 떠 있는 주소를 그대로 상대한다 —
+ * 배포본 연기 테스트가 그 용도다. 그 경우 서버를 띄우지 않는다: 로컬 서버를 함께 굽고
+ * 원격을 검사하면, 로컬 빌드가 깨져도 테스트는 통과한다.
+ */
+const remote = process.env.E2E_BASE_URL
+const baseURL = remote ?? `http://127.0.0.1:${PORT}`
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -35,7 +42,7 @@ export default defineConfig({
    */
   workers: process.env.CI ? 2 : 3,
 
-  webServer: {
+  webServer: remote ? undefined : {
     /*
      * 개발 서버가 아니라 **실제로 배포되는 빌드**를 상대로 돈다.
      * dev는 요청받은 순간 컴파일하므로 첫 방문마다 타이밍이 흔들리고,
