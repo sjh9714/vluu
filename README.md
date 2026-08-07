@@ -48,11 +48,24 @@ photos-src/
 3. `pnpm ingest` — 파생물과 매니페스트를 굽는다. 바뀐 것만 다시 굽는다
 4. `content/photos.meta.ts`에 제목·대체텍스트·캡션을 쓴다
 5. 여행이 새로 생겼다면 `content/routes.ts`에 노선을 더한다
-6. `pnpm verify:media`로 빠진 게 없는지 확인한다
+6. 노선이나 구간이 바뀌었다면 `pnpm basemaps`로 지도를 다시 굽는다
+7. `pnpm verify:media`로 빠진 게 없는지 확인한다
 
 ```bash
-pnpm ingest --force   # 인코딩 설정을 바꿨을 때만. 전부 다시 굽는다
+pnpm ingest --force     # 인코딩 설정을 바꿨을 때만. 전부 다시 굽는다
+pnpm basemaps --force   # 지도 스타일이나 칸 크기를 바꿨을 때
 ```
+
+## 지도
+
+노선 도면 아래 깔리는 지도는 **미리 구워둔 그림**이다. `pnpm basemaps`가 CARTO Positron
+타일을 받아 이어 붙이고 칸이 덮는 범위만 잘라 `public/basemap/`에 넣는다 (11장, 약 0.5MB).
+
+방문자에게는 `<img>` 한 장만 간다 — 지도 라이브러리도 타일 요청도 없다. 대신 화면에
+**표기가 반드시 있어야 한다** (`src/lib/attribution.ts`). 고르는 문제가 아니라 라이선스 조건이다.
+
+투영은 Web Mercator다. 타일 서버와 같은 투영이어야 사진이 지도의 제 자리에 찍힌다 —
+`src/lib/geo.ts`의 `sheet()`가 점의 자리와 지도를 구울 범위를 **함께** 낸다.
 
 ## 구조
 
@@ -65,6 +78,7 @@ src/gl/              WebGL 레이어 — DOM 좌표를 읽어 그 위에 그린�
 src/components/      UI
 src/app/(site)/      라우트. @modal 슬롯이 /p/[slug]를 가로채 모달로 연다
 public/media/        구워진 파생물 (커밋됨)
+public/basemap/      노선 도면에 깔리는 지도 그림 (커밋됨)
 ```
 
 `public/media/<key>/`에는 화면으로 나가는 AVIF·WebP·live.mp4 말고 **`og.jpg`가 하나 더** 있다.

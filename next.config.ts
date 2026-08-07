@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // 지도 그림도 같은 규칙이다 — 구워둔 정적 자산이고 이름에 해시가 없다.
+        source: '/basemap/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=31536000' },
+        ],
+      },
+      {
         source: '/media/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=31536000' },

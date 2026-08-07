@@ -453,16 +453,28 @@ under load    0.0078 – 0.0208   (2.7×)`}
             straight edge to distort.
           </p>
           <p>
-            <strong>The route plot has no basemap, and it is drawn a day at a time.</strong> Sixty-seven
-            of sixty-eight frames carry coordinates, so the routes can be drawn from the photographs
-            themselves — but a map tile layer would drag a whole visual world in with it, and an
-            external service besides. Points, lines and a scale bar are what a survey drawing has.
-            The first version put each route on one sheet, which failed on its own honesty: the day
-            trip to Lake Ashi is seventy kilometres out, so it set the scale and crushed the
-            thirty-eight Tokyo frames into a corner. Each day now gets its own sheet at its own scale
-            — 200 m for an afternoon in Yokohama, 10 km for the Romancecar — and the whole route
-            stays as an overview. Ganghwa is a single coordinate twice over, so it gets a mark and no
-            line; drawing one would be inventing a journey.
+            <strong>The route plot is a real map, baked at build time.</strong> Sixty-seven of
+            sixty-eight frames carry coordinates, so the routes can be drawn from the photographs
+            themselves. The first version drew only that — points, lines, a scale bar, no basemap —
+            on the argument that map tiles drag a whole visual world in with them and an external
+            service besides. It was consistent and it was unreadable: without a coastline nobody
+            could tell Tokyo from anywhere, which is a strange result for a drawing whose entire job
+            is to say <em>where</em>. Consistency lost that argument.
+          </p>
+          <p>
+            The map is still not a dependency. A script fetches the tiles once, stitches them,
+            crops them to exactly the box each sheet covers and commits eleven images totalling half
+            a megabyte; a visitor gets one <code>&lt;img&gt;</code> and no map library, no tile
+            requests, nothing to be down. Switching to Web Mercator was not optional after that
+            decision — the marks have to land where the tile server thinks they land, so the drawing
+            and the picture beneath it now come out of the same projection and the same call.
+          </p>
+          <p>
+            Each day gets its own sheet at its own scale. Putting a route on one sheet failed on its
+            own honesty: the day trip to Lake Ashi is seventy kilometres out, so it set the scale and
+            crushed the thirty-eight Tokyo frames into a corner — 200 m for an afternoon in Yokohama
+            and 10 km for the Romancecar cannot share a ruler. Ganghwa is a single coordinate twice
+            over, so it gets a mark and no line; drawing one would be inventing a journey.
           </p>
           <p>
             <strong>22 frames were cut and the reasons kept.</strong> Duplicates, a museum wall label

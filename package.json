@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "ingest": "tsx scripts/ingest.ts",
+    "basemaps": "tsx scripts/bake-basemaps.ts",
     "verify:media": "tsx scripts/verify-media.ts"
   },
   "dependencies": {

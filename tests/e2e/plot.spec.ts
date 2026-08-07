@@ -45,6 +45,33 @@ test('좌표가 없는 프레임은 그리지 않고, 몇 장인지 밝힌다', 
   )
 })
 
+test('칸마다 지도가 실제로 깔려 있다', async ({ page }) => {
+  /*
+   * 지도는 alt=""인 장식 이미지라 없어도 화면에 티가 안 난다 — 그냥 흰 칸이 되고
+   * 점과 선은 그대로 그려진다. 노선을 고치고 `pnpm basemaps`를 잊으면 조용히 반쪽이 된다.
+   */
+  await page.goto('/c/kanto')
+  const cells = page.locator('[data-route-plot] li')
+  const count = await cells.count()
+  expect(count).toBeGreaterThan(1)
+
+  const loaded = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-route-plot] li img')].map((n) => {
+      const img = n as HTMLImageElement
+      return { src: img.getAttribute('src'), ok: img.complete && img.naturalWidth > 0 }
+    }),
+  )
+  expect(loaded.length, '칸마다 지도가 하나씩 있어야 한다').toBe(count)
+  expect(loaded.every((m) => m.ok), `안 뜬 지도: ${JSON.stringify(loaded.filter((m) => !m.ok))}`).toBe(true)
+})
+
+test('지도 표기를 빠뜨리지 않는다', async ({ page }) => {
+  // 고르는 문제가 아니라 라이선스 조건이다. 지도를 쓰는 대가로 화면에 있어야 한다.
+  await page.goto('/c/kanto')
+  await expect(page.locator('[data-route-plot]')).toContainText('OpenStreetMap')
+  await expect(page.locator('[data-route-plot]')).toContainText('CARTO')
+})
+
 test('좌표가 한 자리뿐인 노선은 선을 그리지 않는다', async ({ page }) => {
   // 강화는 두 장이 같은 좌표다. 이으면 있지도 않은 이동을 그리는 것이다.
   const points = located('ganghwa').map((p) => `${p.exif.gps!.lat},${p.exif.gps!.lon}`)
@@ -63,8 +90,7 @@ test('하루마다 자기 축척으로 그린다', async ({ page }) => {
    * 처음엔 노선 전체를 한 장에 그렸는데, 하코네 왕복 70km가 축척을 지배해서
    * 도쿄의 38장이 한구석에 뭉쳤다. 하루씩 나눈 게 그 해결이므로, 칸마다
    * **서로 다른** 축척이 붙어 있는지가 그 해결이 살아있다는 증거다.
-   */
-  /*
+   *
    * 축척 숫자는 SVG가 아니라 칸 아래 글에 있다. 안에 두면 칸이 좁아질 때 같이 줄어들어
    * 폰에서 5px짜리 글자가 된다 — 막대는 그림이라 줄어도 뜻이 남지만 숫자는 아니다.
    */

@@ -15,6 +15,8 @@ import { EXCLUDED, SELECTED, TOTAL_FRAMES } from '../content/selection'
 import { PHOTOS } from '../content/photos.generated'
 import { PHOTO_META } from '../content/photos.meta'
 import { ROUTES } from '../content/routes'
+import { ROUTE_LIST } from '../src/lib/photos'
+import { plotCells } from '../src/lib/plot-cells'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MEDIA_DIR = path.join(ROOT, 'public', 'media')
@@ -103,6 +105,20 @@ for (const photo of PHOTOS) {
   const hits = ROUTES.filter((r) => date >= r.from && date <= r.to)
   if (hits.length === 0) note(`${photo.key} (${date || '날짜 없음'})가 어느 노선에도 속하지 않는다`)
   if (hits.length > 1) note(`${photo.key}가 여러 노선에 걸린다: ${hits.map((r) => r.slug).join(', ')}`)
+}
+
+/*
+ * ── 도면의 지도 그림이 다 있는가 ─────────────────────────
+ *
+ * `alt=""`인 장식 이미지라 없어도 화면에 아무 티가 안 난다 — 그냥 흰 칸이 되고,
+ * 도면은 여전히 점과 선을 그린다. 노선이나 구간을 고치고 `pnpm basemaps`를 잊으면
+ * 그렇게 조용히 반쪽이 된다.
+ */
+for (const route of ROUTE_LIST) {
+  for (const cell of plotCells(route)) {
+    const file = path.join(ROOT, 'public', 'basemap', `${cell.id}.webp`)
+    if (!(await exists(file))) note(`지도 그림 없음: ${cell.id}.webp — \`pnpm basemaps\`를 돌려야 한다`)
+  }
 }
 
 // ── 결과 ──────────────────────────────────────────────────
