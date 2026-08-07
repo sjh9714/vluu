@@ -60,11 +60,16 @@ pnpm ingest --force   # 인코딩 설정을 바꿨을 때만. 전부 다시 굽�
 photos-src/          원본 (gitignore)
 content/             셀렉·메타데이터·노선. photos.generated.ts는 ingest가 만든다
 scripts/             ingest 파이프라인, verify-media
+assets/              링크 카드를 그릴 때 쓰는 폰트 (Archivo, OFL)
 src/gl/              WebGL 레이어 — DOM 좌표를 읽어 그 위에 그린다
 src/components/      UI
 src/app/(site)/      라우트. @modal 슬롯이 /p/[slug]를 가로채 모달로 연다
 public/media/        구워진 파생물 (커밋됨)
 ```
+
+`public/media/<key>/`에는 화면으로 나가는 AVIF·WebP·live.mp4 말고 **`og.jpg`가 하나 더** 있다.
+링크 미리보기 카드를 그리는 Satori가 PNG와 JPEG만 확실히 읽어서다. 브라우저로 나가는 일은
+없고 빌드 때만 읽힌다.
 
 ## 배포
 

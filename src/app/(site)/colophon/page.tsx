@@ -21,10 +21,19 @@ async function measure() {
   const dir = path.join(process.cwd(), 'public', 'media')
   const totals = new Map<string, { count: number; bytes: number }>()
 
+  let buildOnly = 0
   for (const key of await readdir(dir).catch(() => [])) {
     for (const file of await readdir(path.join(dir, key)).catch(() => [])) {
-      const ext = path.extname(file).slice(1)
       const { size } = await stat(path.join(dir, key, file))
+      /*
+       * og.jpg는 링크 미리보기 카드를 굽는 재료다. 브라우저로 나가는 일이 없으므로
+       * "무엇이 나가는가" 표에 넣으면 그 표가 거짓말이 된다. 대신 따로 센다.
+       */
+      if (file === 'og.jpg') {
+        buildOnly += size
+        continue
+      }
+      const ext = path.extname(file).slice(1)
       const bucket = totals.get(ext) ?? { count: 0, bytes: 0 }
       totals.set(ext, { count: bucket.count + 1, bytes: bucket.bytes + size })
     }
@@ -32,7 +41,7 @@ async function measure() {
 
   const rows = [...totals.entries()].sort((a, b) => b[1].bytes - a[1].bytes)
   const bytes = rows.reduce((sum, [, v]) => sum + v.bytes, 0)
-  return { rows, bytes }
+  return { rows, bytes, buildOnly }
 }
 
 /** 한 장이 실제로 어떤 사다리로 구워졌는지. 파일을 직접 재서 넘긴다. */
@@ -200,6 +209,14 @@ export default async function ColophonPage() {
               </tbody>
             </table>
           </div>
+
+          <p>
+            The repository carries {mb(media.buildOnly)} more that this table deliberately leaves out:
+            one JPEG per frame that no browser ever requests. It exists because the renderer behind the
+            link preview cards reads only PNG and JPEG, and everything above is AVIF and WebP. That
+            makes it a build ingredient rather than a delivery format, and counting it as shipped would
+            turn the rows above into a lie.
+          </p>
         </section>
 
         <section className={styles.section}>

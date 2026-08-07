@@ -27,6 +27,25 @@ const MANIFEST = path.join(ROOT, 'content', 'photos.generated.ts')
 const CAMERA_DIRS: readonly CameraKey[] = ['iphone-15-pro', 'iphone-12-pro-max', 'nikon-z50ii']
 const STILL = /\.(heic|jpe?g|png|tiff?)$/i
 
+/**
+ * 매니페스트가 약속한 파일이 전부 디스크에 있는가.
+ *
+ * 파이프라인이 새 산출물을 굽기 시작하면 이미 구워둔 프레임은 해시가 같아서
+ * 영원히 건너뛰어진다. 그래서 캐시 적중의 조건에 "약속을 지키고 있는가"를 더한다.
+ * `verify:media`가 나중에 잡아주긴 하지만, 그때는 이미 빌드가 깨진 뒤다.
+ */
+async function isComplete(photo: PhotoSource, dir: string): Promise<boolean> {
+  const wanted = [
+    ...photo.widths.map((w) => `${w}.avif`),
+    ...photo.webpWidths.map((w) => `${w}.webp`),
+    'og.jpg',
+    ...(photo.live ? ['live.mp4'] : []),
+  ]
+  const there = await readdir(dir).catch(() => null)
+  if (!there) return false
+  return wanted.every((name) => there.includes(name))
+}
+
 /** 파일명을 미디어 디렉터리 키로. 제목이 바뀌어도 이 경로는 절대 안 바뀐다. */
 function toKey(source: string): string {
   return source.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -112,8 +131,16 @@ async function main() {
     // 매니페스트에 반영되지 않아, 조용히 틀린 값이 남는다.
     const exif = await readExif(file)
 
+    /*
+     * 해시가 같아도 **약속한 파일이 다 있을 때만** 건너뛴다.
+     *
+     * 해시만 보면 파이프라인이 새 산출물을 굽기 시작해도 이미 구워둔 프레임은
+     * 영원히 그걸 못 받는다 — 원본은 안 바뀌었으니까. og.jpg를 더할 때 실제로
+     * 그랬고, `--force`로 전부 다시 굽는 건 바뀌지도 않은 AVIF 수백 개를
+     * 같은 바이트로 다시 써서 diff만 어지럽힌다.
+     */
     const hit = cached.get(source)
-    if (!force && hit && hit.hash === hash) {
+    if (!force && hit && hit.hash === hash && (await isComplete(hit, outDir))) {
       skipped += 1
       return { ...hit, exif }
     }

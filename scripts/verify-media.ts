@@ -54,6 +54,11 @@ for (const photo of PHOTOS) {
   if (photo.live && !(await exists(path.join(dir, 'live.mp4')))) {
     note(`Live로 표시됐는데 영상이 없음: ${photo.key}`)
   }
+  /*
+   * 링크 미리보기 카드가 빌드 때 이 파일을 읽는다. 없으면 화면에서는 아무 티도 안 나고
+   * 빌드만 터진다 — 매니페스트에 없는 파일이라 여기서 대신 지켜본다.
+   */
+  if (!(await exists(path.join(dir, 'og.jpg')))) note(`카드용 JPEG 없음: ${photo.key}/og.jpg`)
   if (photo.widths.some((w) => w > photo.width)) {
     note(`${photo.key}: 원본(${photo.width}px)보다 큰 파생물을 만들었다`)
   }

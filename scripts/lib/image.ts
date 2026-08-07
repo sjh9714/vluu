@@ -23,6 +23,15 @@ export const TARGET_WIDTHS = [320, 640, 1280, 2048] as const
 const WEBP_WIDTHS = new Set<number>([640, 1280])
 
 /**
+ * 링크 미리보기 카드에 얹을 JPEG.
+ *
+ * AVIF도 WebP도 아닌 이유는 하나다 — 카드를 그리는 Satori가 확실히 읽는 건 PNG와
+ * JPEG뿐이다. 화면에 나가는 그림이 아니라 빌드 때 한 번 읽히고 마는 재료라
+ * 폭 640이면 넉넉하고, 카드 안에서는 세로로 담기므로 잘라내지 않는다.
+ */
+const OG_WIDTH = 640
+
+/**
  * sharp는 아이폰 HEIC를 직접 못 읽는다.
  * libvips에 heif 입력이 있긴 한데, Live Photo HEIC는 iref 참조가 45개라
  * libheif의 기본 보안 한도(16)에 걸려 "corrupt header"로 거절당한다.
@@ -84,6 +93,13 @@ export async function deriveImage(
       }
       await Promise.all(jobs)
     }
+
+    // 링크 미리보기 카드용. 화면에는 절대 나가지 않는다 — 빌드 때 카드에 얹히고 끝이다.
+    await upright
+      .clone()
+      .resize({ width: Math.min(OG_WIDTH, width), withoutEnlargement: true })
+      .jpeg({ quality: 72, mozjpeg: true })
+      .toFile(path.join(outDir, 'og.jpg'))
 
     // LQIP — DOM 폴백의 배경이자 GL이 고해상도를 기다리는 동안 올릴 첫 텍스처.
     const lqipBuffer = await upright.clone().resize({ width: 32 }).webp({ quality: 55 }).toBuffer()
