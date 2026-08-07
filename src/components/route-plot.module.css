@@ -1,0 +1,151 @@
+/*
+ * 노선 도면. 측량 도면의 어휘로 그린다 — 획은 가늘게, 채도는 없고,
+ * 강조는 굵기와 채움으로만 준다. 색으로 하루하루를 구분하면 화이트 큐브가 무너지므로
+ * 구간은 숫자와 칸으로 구분한다.
+ */
+
+.plot {
+  margin: 0 var(--gutter) var(--s-9);
+  padding-top: var(--s-6);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 8rem) minmax(0, var(--measure));
+  gap: var(--s-5);
+  align-items: baseline;
+}
+
+@media (max-width: 720px) {
+  .head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-2);
+  }
+}
+
+.head h2 {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  font-weight: 400;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.head p {
+  font-size: var(--t-small);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+/*
+ * 균일한 칸. 인덱스 그리드와 같은 판단이다 — 크기를 들쭉날쭉하게 하면 정보가 아니라
+ * 강조로 읽히는데, 여기서 하루하루의 중요도 차이는 우리가 정할 게 아니다.
+ */
+.grid {
+  margin-top: var(--s-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-5) var(--s-4);
+  list-style: none;
+}
+
+.cell {
+  min-width: 0;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--rule-w) solid var(--rule);
+  background: var(--paper);
+}
+
+.path {
+  fill: none;
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.tick {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+}
+
+.mark rect {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1;
+  transition:
+    fill var(--t-fast) var(--ease),
+    stroke-width var(--t-fast) var(--ease);
+}
+
+.mark:hover rect {
+  fill: var(--ink);
+}
+
+/*
+ * 스트립에서 지금 보고 있는 프레임. 자리를 알려주는 것이지 크기를 바꾸는 게 아니라
+ * 채움만 뒤집는다 — 표식이 커지면 도면의 축척이 흔들려 보인다.
+ */
+.mark[data-current] rect {
+  fill: var(--ink);
+  stroke-width: 2;
+}
+
+.legNumber {
+  fill: var(--ink-mute);
+  font-family: var(--face-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scaleLabel {
+  fill: var(--ink-faint);
+  font-family: var(--face-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* — 칸 아래 이름표. 도면이 감춰져 있으므로 여기가 읽히는 내용이다. */
+
+.label {
+  display: flex;
+  gap: var(--s-2);
+  align-items: baseline;
+  margin-top: var(--s-2);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.label b {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.title {
+  color: var(--ink-mute);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  margin-left: auto;
+  padding-left: var(--s-2);
+}
+
+.date {
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  color: var(--ink-faint);
+}

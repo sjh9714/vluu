@@ -424,6 +424,18 @@ under load    0.0078 – 0.0208   (2.7×)`}
             straight edge to distort.
           </p>
           <p>
+            <strong>The route plot has no basemap, and it is drawn a day at a time.</strong> Sixty-seven
+            of sixty-eight frames carry coordinates, so the routes can be drawn from the photographs
+            themselves — but a map tile layer would drag a whole visual world in with it, and an
+            external service besides. Points, lines and a scale bar are what a survey drawing has.
+            The first version put each route on one sheet, which failed on its own honesty: the day
+            trip to Lake Ashi is seventy kilometres out, so it set the scale and crushed the
+            thirty-eight Tokyo frames into a corner. Each day now gets its own sheet at its own scale
+            — 200 m for an afternoon in Yokohama, 10 km for the Romancecar — and the whole route
+            stays as an overview. Ganghwa is a single coordinate twice over, so it gets a mark and no
+            line; drawing one would be inventing a journey.
+          </p>
+          <p>
             <strong>22 frames were cut and the reasons kept.</strong> Duplicates, a museum wall label
             that was somebody else&rsquo;s work, a picture at one twelfth the resolution of the rest.
             The list lives in the repository so the question does not get relitigated.

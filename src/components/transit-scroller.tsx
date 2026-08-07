@@ -6,19 +6,22 @@ import styles from './transit-strip.module.css'
 /**
  * 노선을 가로로 통과하게 만드는 얇은 층.
  *
- * 세 가지만 한다 — 세로 휠을 가로 이동으로 옮기고, 지금 어디쯤인지를 CSS 변수로 흘리고,
- * 구간 경계가 레일의 어디에 오는지를 실측해 눈금을 놓는다.
+ * 네 가지만 한다 — 세로 휠을 가로 이동으로 옮기고, 지금 어디쯤인지를 CSS 변수로 흘리고,
+ * 구간 경계가 레일의 어디에 오는지를 실측해 눈금을 놓고, 지금 가운데 있는 프레임을
+ * 도면에 표시한다.
  *
- * 프레임과 레일은 전부 서버에서 그려져 props로 넘어온다. 사진 데이터는 클라이언트로
+ * 프레임과 레일과 도면은 전부 서버에서 그려져 props로 넘어온다. 사진 데이터는 클라이언트로
  * 한 바이트도 오지 않는다 — GL 레이어와 같은 규칙이다.
  */
 export function TransitScroller({
   children,
   rail,
+  plot,
   label,
 }: {
   children: React.ReactNode
   rail: React.ReactNode
+  plot?: React.ReactNode
   label: string
 }) {
   const field = useRef<HTMLDivElement>(null)
@@ -34,6 +37,46 @@ export function TransitScroller({
     const report = () => {
       const total = span()
       wrap.style.setProperty('--progress', total > 0 ? (element.scrollLeft / total).toFixed(4) : '0')
+    }
+
+    /*
+     * 지금 가운데 있는 프레임을 도면에 표시한다.
+     *
+     * 레일은 "얼마나 왔나"를, 도면은 "어디였나"를 말한다. 둘은 다른 질문이라 둘 다 둔다.
+     * 다만 같은 프레임을 가리켜야 두 그림이 한 화면의 두 시점이 된다.
+     */
+    let marked: string | null = null
+    const mark = () => {
+      const box = element.getBoundingClientRect()
+      const centre = box.left + box.width / 2
+
+      let key: string | null = null
+      let nearest = Infinity
+      for (const frame of element.querySelectorAll<HTMLElement>('[data-photo]')) {
+        const r = frame.getBoundingClientRect()
+        const distance = Math.abs(r.left + r.width / 2 - centre)
+        if (distance < nearest) {
+          nearest = distance
+          key = frame.dataset['photo'] ?? null
+        }
+      }
+      if (key === marked) return
+      marked = key
+
+      for (const point of wrap.querySelectorAll<HTMLElement>('[data-plot-key]')) {
+        if (point.dataset['plotKey'] === key) point.dataset['current'] = ''
+        else delete point.dataset['current']
+      }
+    }
+
+    // 스크롤 이벤트는 프레임보다 자주 온다. 68개 rect를 그때마다 재면 굴리는 손이 무거워진다.
+    let pending = 0
+    const scheduleMark = () => {
+      if (pending) return
+      pending = requestAnimationFrame(() => {
+        pending = 0
+        mark()
+      })
     }
 
     /*
@@ -77,6 +120,12 @@ export function TransitScroller({
     const measure = () => {
       report()
       placeTicks()
+      mark()
+    }
+
+    const onScroll = () => {
+      report()
+      scheduleMark()
     }
 
     measure()
@@ -84,13 +133,14 @@ export function TransitScroller({
     const observer = new ResizeObserver(measure)
     observer.observe(element)
 
-    element.addEventListener('scroll', report, { passive: true })
+    element.addEventListener('scroll', onScroll, { passive: true })
     // preventDefault를 쓰므로 passive일 수 없다.
     element.addEventListener('wheel', onWheel, { passive: false })
 
     return () => {
       observer.disconnect()
-      element.removeEventListener('scroll', report)
+      cancelAnimationFrame(pending)
+      element.removeEventListener('scroll', onScroll)
       element.removeEventListener('wheel', onWheel)
     }
   }, [])
@@ -115,6 +165,7 @@ export function TransitScroller({
         {children}
       </div>
       {rail}
+      {plot}
     </div>
   )
 }

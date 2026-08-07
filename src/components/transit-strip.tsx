@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import type { Route } from '#content/types'
 import * as fmt from '@/lib/format'
 import { Frame } from './frame'
+import { RoutePlot } from './route-plot'
 import { TransitScroller } from './transit-scroller'
 import styles from './transit-strip.module.css'
 
@@ -22,6 +23,8 @@ export function TransitStrip({ route }: { route: Route }) {
 
       <TransitScroller
         label={`${route.title} sequence`}
+        // 좌표만으로 그린 노선 도면. 스트립을 굴리면 지금 프레임이 도면에서 채워진다.
+        plot={<RoutePlot route={route} />}
         rail={
           /*
            * 노선도. 눈금은 구간 경계이고, 표식은 지금 위치다.
