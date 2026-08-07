@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import type { Photo } from '#content/types'
+import { frameLabel } from '@/lib/grid'
+import { date as fmtDate } from '@/lib/format'
 import styles from './frame.module.css'
 
 /**
@@ -16,6 +18,7 @@ import styles from './frame.module.css'
 export function Frame({
   photo,
   sizes,
+  number,
   priority = false,
   showCaption = true,
   className,
@@ -23,6 +26,8 @@ export function Frame({
 }: {
   photo: Photo
   sizes: string
+  /** 카탈로그 번호. 있으면 캡션 맨 앞에 붙는다. */
+  number?: number
   priority?: boolean
   showCaption?: boolean
   className?: string
@@ -66,9 +71,16 @@ export function Frame({
       </Link>
 
       {showCaption ? (
+        /*
+         * 두 줄로 고정한다. 제목 길이에 따라 줄바꿈이 갈리면 캡션 높이가 달라지고,
+         * 균일 그리드가 애써 맞춰놓은 다음 행의 시작점이 어긋난다.
+         */
         <p className={styles.caption}>
-          <span className={styles.title}>{photo.title}</span>
-          {photo.place ? <span>{photo.place}</span> : null}
+          <span className={styles.line}>
+            {number !== undefined ? <span className={styles.number}>{frameLabel(number)}</span> : null}
+            <span className={styles.title}>{photo.title}</span>
+          </span>
+          <span className={styles.line}>{photo.place ?? fmtDate(photo.exif.shotDate)}</span>
         </p>
       ) : null}
     </div>

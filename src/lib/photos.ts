@@ -69,6 +69,24 @@ export function getRoute(slug: string): Route | undefined {
   return routeBySlug.get(slug)
 }
 
+/**
+ * 카탈로그 번호. 001부터 68까지.
+ *
+ * `PHOTO_LIST`가 아니라 **`ROUTE_LIST`를 평탄화한 순서**에서 뽑는다. 인덱스가
+ * 노선 → 구간으로 나뉘어 보이므로, 화면에 놓이는 순서를 그대로 번호로 삼아야
+ * 둘이 어긋날 수 없다. 두 순서가 지금은 같지만 같다는 사실에 기대지 않는다.
+ */
+const FRAME_NUMBER: ReadonlyMap<string, number> = new Map(
+  ROUTE_LIST.flatMap((route) => route.legs).flatMap((leg) => leg.photos).map((photo, i) => [photo.slug, i + 1]),
+)
+
+export function frameNumber(slug: string): number | undefined {
+  return FRAME_NUMBER.get(slug)
+}
+
+/** 카탈로그 전체 장수. `023 / 068`의 분모. */
+export const FRAME_TOTAL = FRAME_NUMBER.size
+
 /** 어떤 사진이 어느 노선에 있는지 — 상세에서 앞뒤로 넘길 때 쓴다. */
 const routeOfPhoto = new Map<string, Route>()
 for (const route of ROUTE_LIST) {

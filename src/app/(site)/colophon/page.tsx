@@ -41,7 +41,7 @@ const mb = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)} MB`
 const MEASURED_ON = '7 August 2026'
 const MEASUREMENTS = [
   { route: '/', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.9s', tbt: '0ms' },
-  { route: '/c/*', performance: 99, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', tbt: '80ms' },
+  { route: '/c/*', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.8s', tbt: '0ms' },
   { route: '/p/*', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', tbt: '0ms' },
   { route: '/colophon', performance: 100, accessibility: 100, bestPractices: 100, seo: 100, lcp: '0.6s', tbt: '0ms' },
 ] as const
@@ -264,6 +264,16 @@ export default async function ColophonPage() {
             <strong>Sequence comes from the camera, not from taste.</strong> Routes are trips, legs
             are days, and a frame&rsquo;s place is decided by when it was taken. No hand-kept ordering
             to drift out of date when new photographs arrive.
+          </p>
+          <p>
+            <strong>The index was scattered before it was tidy, and scattered was wrong.</strong> Every
+            frame here is exactly 3:4, so the first version varied the widths and nudged each picture
+            down the page — on the theory that sixty-eight identical rectangles would be dull. It
+            bought variety by spending every alignment line on the page, and what was left read as
+            spillage rather than a collection. Uniform tiles are not a compromise for material like
+            this; they are what it wants. The variety now comes from section structure and type, and
+            the scroll distortion is easier to see, not harder, because there is finally a straight
+            edge to distort.
           </p>
           <p>
             <strong>22 frames were cut and the reasons kept.</strong> Duplicates, a museum wall label

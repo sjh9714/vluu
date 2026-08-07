@@ -60,10 +60,13 @@
   outline: var(--focus-w) solid var(--frame-color, var(--focus));
 }
 
+/*
+ * 정확히 두 줄. 높이가 고정되어야 균일 그리드의 다음 행이 같은 높이에서 시작한다.
+ * 제목이 길면 줄바꿈 대신 말줄임으로 자른다 — 한 장 때문에 행 전체가 밀리는 것보다 낫다.
+ */
 .caption {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--s-2);
+  display: grid;
+  grid-template-rows: repeat(2, 1lh);
   margin-top: var(--s-2);
   font-family: var(--face-mono);
   font-size: var(--t-micro);
@@ -73,8 +76,22 @@
   color: var(--ink-mute);
 }
 
-.caption .title {
+.line {
+  display: flex;
+  gap: var(--s-2);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.number {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+}
+
+.title {
   color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Live Photo 표시. 점 하나. 설명은 붙이지 않는다 — 커서를 올리면 알게 된다. */

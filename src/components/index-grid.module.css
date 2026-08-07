@@ -1,0 +1,135 @@
+/*
+ * 인덱스 — 아카이브 그리드.
+ *
+ * 모든 프레임이 같은 크기이고 행·열이 완전히 정렬된다. 68장이 전부 3:4이므로
+ * 이건 타협이 아니라 재료에 맞는 배치다. 변화는 사진 크기가 아니라
+ * **섹션 구조와 타이포**가 만든다.
+ *
+ * 이전 버전은 폭을 3/2/4로 순환시키고 세로로 밀어냈다. 지루함은 피했지만
+ * 화면에 정렬 기준선이 하나도 남지 않았다.
+ */
+
+.index {
+  --grid-gap: clamp(16px, 1.6vw, 28px);
+  padding-bottom: var(--s-10);
+}
+
+/* ── 인트로 ─────────────────────────────────────────────── */
+.intro {
+  padding: var(--s-8) var(--gutter) 0;
+  max-width: var(--measure);
+}
+
+.intro h1 {
+  font-size: var(--t-h1);
+  letter-spacing: var(--tr-head);
+}
+
+.intro p {
+  margin-top: var(--s-4);
+  font-size: var(--t-lead);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+/* ── 노선 ───────────────────────────────────────────────── */
+.route {
+  margin-top: var(--s-8);
+}
+
+/*
+ * 스크롤하는 동안 지금 어느 여행인지 계속 보인다.
+ * 사이트 헤더와 같은 높이 상수를 봐야 겹치지 않는다.
+ */
+.routeHead {
+  position: sticky;
+  top: var(--chrome-h);
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin: 0 var(--gutter);
+  padding: var(--s-3) 0;
+  background: var(--paper);
+  border-bottom: var(--rule-w) solid var(--ink);
+}
+
+.routeHead h2 {
+  font-size: var(--t-h2);
+  letter-spacing: var(--tr-head);
+}
+
+.count {
+  flex: 0 0 auto;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ── 그리드 ─────────────────────────────────────────────── */
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 5), minmax(0, 1fr));
+  gap: var(--s-6) var(--grid-gap);
+  align-items: start;
+  padding: var(--s-5) var(--gutter) 0;
+}
+
+@media (max-width: 900px) {
+  .sheet {
+    --columns: 3;
+  }
+}
+
+/*
+ * 여기부터 사이트 헤더가 여러 줄로 접혀 높이를 예측할 수 없다.
+ * 높이를 맞추려 들기보다 고정을 포기한다 — 좁은 화면에서 고정 헤더 두 겹은
+ * 방향을 알려주기보다 화면을 먹는다.
+ */
+@media (max-width: 700px) {
+  .routeHead {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    --columns: 2;
+    gap: var(--s-5) var(--grid-gap);
+  }
+}
+
+/* ── 구간 구분 카드 ─────────────────────────────────────── */
+/*
+ * 사진이 놓일 자리 하나를 차지한다. 그리드를 끊지 않으므로 빈 칸이 생기지 않고,
+ * 날짜는 계속 읽힌다. 카드 목록에 끼워 넣는 색인 카드와 같은 물건이다.
+ */
+.legMark {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: var(--rule-w) solid var(--ink);
+}
+
+.legDate {
+  font-family: var(--face-mono);
+  font-size: var(--t-mini);
+  font-weight: 500;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.legTitle {
+  font-size: var(--t-body);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tr-head);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}

@@ -9,6 +9,8 @@
   padding: var(--s-4) var(--gutter);
   background: var(--paper);
   border-bottom: var(--rule-w) solid var(--rule);
+  /* 인덱스의 구간 헤더가 이 높이만큼 아래에 붙는다. 두 곳이 같은 값을 봐야 한다. */
+  min-height: var(--chrome-h);
 }
 
 .wordmark {

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import type { Photo, Route } from '#content/types'
 import * as fmt from '@/lib/format'
+import { frameLabel } from '@/lib/grid'
+import { FRAME_TOTAL, frameNumber } from '@/lib/photos'
 import { LiveFrame } from './live-frame'
 import styles from './viewer-stage.module.css'
 
@@ -36,6 +38,7 @@ export function ViewerStage({
   const avif = photo.widths.map((w) => `${base}/${w}.avif ${w}w`).join(', ')
   const webp = photo.webpWidths.map((w) => `${base}/${w}.webp ${w}w`).join(', ')
   const fallbackWidth = photo.webpWidths.at(-1) ?? photo.widths.at(-1)
+  const number = frameNumber(photo.slug)
 
   return (
     <div
@@ -76,6 +79,7 @@ export function ViewerStage({
         <p className={styles.caption}>{photo.caption}</p>
 
         <dl className={styles.facts}>
+          <Fact label="Frame" value={number ? `${frameLabel(number)} / ${frameLabel(FRAME_TOTAL)}` : null} />
           <Fact label="Place" value={photo.place ?? null} />
           <Fact label="Date" value={photo.exif.shotDate ? fmt.date(photo.exif.shotDate) : null} />
           <Fact label="Time" value={fmt.time(photo.exif.shotAt)} />

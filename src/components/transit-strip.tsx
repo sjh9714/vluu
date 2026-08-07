@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { Route } from '#content/types'
 import * as fmt from '@/lib/format'
 import { Frame } from './frame'
@@ -20,7 +21,7 @@ export function TransitStrip({ route }: { route: Route }) {
 
       <div className={styles.strip} tabIndex={0} role="region" aria-label={`${route.title} sequence`}>
         {route.legs.map((leg) => (
-          <div key={leg.date} style={{ display: 'contents' }}>
+          <Fragment key={leg.date}>
             <div className={styles.legMark} aria-hidden="true">
               <span>
                 <b>{fmt.date(leg.date)}</b> — {leg.title}
@@ -35,7 +36,7 @@ export function TransitStrip({ route }: { route: Route }) {
                 className={styles.stop}
               />
             ))}
-          </div>
+          </Fragment>
         ))}
       </div>
 
