@@ -1,0 +1,36 @@
+# 원본 사진은 커밋하지 않는다.
+# 빌드 파이프라인이 만든 파생물(public/media/**)만 커밋된다.
+photos-src/**
+!photos-src/
+!photos-src/README.md
+!photos-src/*/
+!photos-src/*/.gitkeep
+
+# ingest 캐시
+.cache/
+
+# 의존성 / 빌드 산출물 (Phase 0에서 확장)
+node_modules/
+.next/
+out/
+dist/
+
+# TypeScript (Next가 생성·재생성하는 것들)
+*.tsbuildinfo
+next-env.d.ts
+
+# 환경변수
+.env
+.env.local
+.env*.local
+
+# OS / 에디터
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# 테스트 산출물
+test-results/
+playwright-report/
+coverage/

@@ -1,0 +1,49 @@
+.shell {
+  min-height: 100svh;
+  padding: var(--gutter);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--s-8);
+}
+
+.wordmark {
+  font-size: var(--t-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-display);
+  font-weight: 600;
+  /* Archivo의 가변 폭 축을 넓게 — 이름은 건축물처럼 서 있어야 한다 */
+  font-stretch: 118%;
+}
+
+.statement {
+  align-self: center;
+  max-width: var(--measure);
+  font-size: var(--t-lead);
+  line-height: var(--lh-body);
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+.statement em {
+  color: var(--ink);
+  font-style: normal;
+}
+
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-6);
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.state b {
+  color: var(--ink);
+  font-weight: 500;
+}

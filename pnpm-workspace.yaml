@@ -1,0 +1,7 @@
+# pnpm 11부터 설치 설정은 package.json이 아니라 여기에 둔다.
+# 워크스페이스는 아니고, 설치 정책만 담는 파일.
+
+# 네이티브 바이너리를 고르기 위해 postinstall이 필요한 패키지만 명시적으로 허용한다.
+allowBuilds:
+  unrs-resolver: true # eslint-import-resolver-typescript의 네이티브 리졸버
+  sharp: true # 이미지 파이프라인 (Phase 1)
