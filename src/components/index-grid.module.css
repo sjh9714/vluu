@@ -60,6 +60,27 @@
   letter-spacing: var(--tr-head);
 }
 
+/*
+ * 제목이 그 노선으로 들어가는 문이다. 다만 밑줄을 늘 그어두면 사진 위에서 크롬이
+ * 시끄러워지므로, 누를 수 있다는 표시는 커서를 올렸을 때 헤어라인으로만 준다 —
+ * 사이트의 다른 링크와 같은 규칙이다.
+ */
+.routeLink {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: var(--rule-w) solid transparent;
+  transition: border-color var(--t-fast) var(--ease);
+  outline-offset: var(--focus-gap);
+}
+
+.routeLink:hover {
+  border-bottom-color: var(--ink);
+}
+
+.routeLink:focus-visible {
+  outline: var(--focus-w) solid var(--focus);
+}
+
 .count {
   flex: 0 0 auto;
   font-family: var(--face-mono);

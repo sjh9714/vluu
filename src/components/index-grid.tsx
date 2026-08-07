@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Fragment } from 'react'
 import type { Route } from '#content/types'
 import * as fmt from '@/lib/format'
@@ -27,8 +28,17 @@ export function IndexGrid({ routes }: { routes: readonly Route[] }) {
     <>
       {routes.map((route) => (
         <section key={route.slug} className={styles.route}>
+          {/*
+            제목이 그 노선으로 들어가는 문이다.
+            링크가 아니었을 때는 노선 페이지에 닿는 길이 헤더 네비 하나뿐이었고,
+            거기서는 그냥 지명이라 다른 화면이 있다는 걸 알 방법이 없었다.
+          */}
           <div className={styles.routeHead}>
-            <h2>{route.title}</h2>
+            <h2>
+              <Link href={`/c/${route.slug}`} className={styles.routeLink}>
+                {route.title}
+              </Link>
+            </h2>
             <span className={styles.count}>{frames(route.photos.length)}</span>
           </div>
 

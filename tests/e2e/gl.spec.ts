@@ -55,7 +55,8 @@ test.describe('WebGL 레이어', () => {
     await page.goto('/')
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset['gl'])).toBe('on')
 
-    await page.getByRole('link', { name: 'Kantō' }).click()
+    // 인덱스의 노선 제목도 같은 곳으로 가는 링크가 됐다. 어느 쪽인지 밝힌다.
+    await page.getByLabel('Routes').getByRole('link', { name: 'Kantō' }).click()
     await page.waitForURL('**/c/kanto')
 
     const frames = await page.locator('[data-photo]').count()

@@ -26,6 +26,18 @@ for (const route of ROUTE_LIST) {
   })
 }
 
+test('인덱스의 노선 제목이 그 노선으로 들어가는 문이다', async ({ page }) => {
+  /*
+   * 링크가 아니었을 때는 노선 페이지에 닿는 길이 헤더 네비 하나뿐이었고, 거기서는
+   * 그냥 지명이라 다른 화면이 있다는 걸 알 방법이 없었다. 실제로 못 찾은 사람이 있었다.
+   */
+  await page.goto('/')
+  const route = ROUTE_LIST[0]!
+  await page.getByRole('heading', { level: 2, name: route.title }).getByRole('link').click()
+  await expect(page).toHaveURL(new RegExp(`/c/${route.slug}$`))
+  await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible()
+})
+
 test('인덱스에서 사진을 눌러 뷰어로 간다', async ({ page }) => {
   await page.goto('/')
   const first = PHOTO_LIST[0]!
