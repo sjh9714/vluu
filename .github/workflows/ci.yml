@@ -1,0 +1,90 @@
+# Colophon이 "유닛 44개 · e2e 115개"를 자랑한다. 푸시할 때 아무것도 안 돌면
+# 그 숫자는 측정이 아니라 주장이 된다. 그래서 e2e까지 전부 여기서 돈다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 같은 브랜치에 연달아 푸시하면 앞의 실행을 접는다. 마지막 커밋의 결과만 의미가 있다.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # 프로덕션과 같은 메이저를 쓴다. Vercel 프로젝트가 24.x다 —
+  # 로컬(22)에만 맞추면 배포에서만 터지는 차이를 CI가 못 잡는다.
+  NODE_VERSION: '24'
+
+jobs:
+  check:
+    name: 정적 검사와 유닛
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      # pnpm 11은 설치 정책을 pnpm-workspace.yaml에서 읽는다. sharp·esbuild의
+      # postinstall이 거기서 허용되지 않으면 여기서 조용히 네이티브 바이너리 없이 깔린다.
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      # 콘텐츠 레이어와 실제 파일이 어긋나면 빌드는 되지만 화면에 구멍이 난다.
+      - run: pnpm verify:media
+
+  e2e:
+    name: 브라우저
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 브라우저는 수백 MB다. Playwright 버전이 그대로면 다시 받지 않는다.
+      - name: Playwright 버전 읽기
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      # 캐시가 맞아도 시스템 라이브러리는 러너에 없다. 브라우저 자체는 받지 않는다.
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium webkit
+
+      # webServer가 매번 `pnpm build`부터 한다 — 개발 서버가 아니라 실제로 배포되는 빌드를 상대한다.
+      # CI=true는 러너가 이미 넣어준다. playwright.config가 그걸 보고 워커를 2로 줄이고 재시도를 켠다.
+      - run: pnpm test:e2e
+
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
