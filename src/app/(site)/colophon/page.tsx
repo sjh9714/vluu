@@ -467,6 +467,19 @@ under load    0.0078 – 0.0208   (2.7×)`}
             without a phone in your hand. Mouse pointers are ignored: dragging with a mouse fights
             clicking and selecting, and the desktop already has arrow keys.
           </p>
+          <p>
+            One line of CSS was quietly breaking all of this on short windows. The photograph sizes
+            itself with <code>height: 100%</code> so its box matches the picture exactly — the canvas
+            needs that rectangle to be true or the morph flies at empty margin. But its parent&rsquo;s
+            grid had no declared row, and a percentage measured against a row of indefinite height is
+            not an error: it silently becomes <code>auto</code>, and the aspect ratio then fixes the
+            size at whatever the first pass produced. At 1440&thinsp;×&thinsp;900 that was 768 pixels
+            tall against a 739-pixel slot; shrink the window to 600 and the same 768 pixels overflowed
+            by 329, running the photograph straight over the caption and off the screen. It only
+            became visible when a rail was added below and the picture landed on top of it.
+            Declaring the row — <code>minmax(0, 1fr)</code> — lets the percentage resolve, and a test
+            now measures the gap between the picture and the block beneath it at a laptop-sized window.
+          </p>
         </section>
 
         <section className={styles.section}>
@@ -490,6 +503,17 @@ under load    0.0078 – 0.0208   (2.7×)`}
             this; they are what it wants. The variety now comes from section structure and type, and
             the distortion under your cursor is easier to see, not harder, because there is finally a
             straight edge to distort.
+          </p>
+          <p>
+            <strong>The counter and the arrows were describing different sequences.</strong> A viewer
+            read <code>Frame 002 / 068</code> from the catalogue while its arrows moved only inside
+            the trip they belonged to, because jumping from the end of one journey to the start of
+            another is not a next photograph. Ganghwa holds two frames. So its second one announced
+            that sixty-six remained and, in the same breath, offered <code>End&nbsp;→</code>. Nothing
+            errored; both halves were locally correct and the contradiction just sat there. The rail
+            under each photograph now carries the sequence the arrows actually walk —{' '}
+            <code>KANTŌ · 25 / 58</code>, ticks where the days change. The catalogue number stays
+            where it was: it is this frame&rsquo;s name, like the number on a negative, not a position.
           </p>
           <p>
             <strong>The banner is the one place a frame gets cropped.</strong> Everywhere else a

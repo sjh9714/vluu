@@ -6,8 +6,10 @@ import type { Photo } from '#content/types'
 import * as fmt from '@/lib/format'
 import { follow, readGesture } from '@/lib/gesture'
 import { frameLabel } from '@/lib/grid'
+import type { Place } from '@/lib/photos'
 import { LiveFrame } from './live-frame'
 import { PhotoPicture } from './photo-picture'
+import { ViewerRail } from './viewer-rail'
 import styles from './photo-modal.module.css'
 
 /**
@@ -22,12 +24,15 @@ export function PhotoModal({
   photo,
   number,
   total,
+  place,
   previous,
   next,
 }: {
   photo: Photo
   number: number | undefined
   total: number
+  /** 앞뒤 화살표가 도는 수열에서의 자리. 카탈로그 번호(`number`)와는 다른 것이다. */
+  place: Place | undefined
   previous: Photo | undefined
   next: Photo | undefined
 }) {
@@ -262,7 +267,13 @@ export function PhotoModal({
           ) : null}
         </div>
 
-        <div>
+        <div className={styles.info}>
+          {/*
+            이동 컨트롤 바로 아래다. "지금 어디쯤"은 넘기는 자리에 붙어 있어야 한다 —
+            촬영정보 안에 접어두면 넘기다 말고 펼쳐봐야 알 수 있다.
+          */}
+          <ViewerRail place={place} />
+
           <p className={styles.caption}>
             {number ? <span className={styles.number}>{frameLabel(number)}</span> : null}
             <span className={styles.title}>{photo.title}</span>

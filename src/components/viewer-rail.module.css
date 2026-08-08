@@ -1,0 +1,98 @@
+/*
+ * 뷰어의 위치 표시.
+ *
+ * 노선 페이지의 레일(`transit-strip.module.css`)과 같은 어휘다 — 헤어라인, 구간 눈금,
+ * 잉크색 표식. 두 화면이 같은 것을 같은 모양으로 말해야 한 사이트로 읽힌다.
+ */
+
+.rail {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  /*
+   * 폭을 묶는다. 모달에서는 이 자리가 1300px이 넘는데, 그만큼 늘어난 헤어라인은
+   * 위치를 재는 눈금이 아니라 화면을 가르는 구분선으로 읽힌다 — 바로 위에
+   * 정보 블록의 경계선이 이미 하나 있으므로 나란한 두 줄이 된다.
+   * 전체 페이지 쪽 열은 원래 이보다 좁아 아무 영향이 없다.
+   */
+  max-width: 34rem;
+  font-family: var(--face-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 양끝 글자는 줄어들지 않는다. 줄어들 몫은 가운데 선이 갖는다. */
+.route,
+.count {
+  flex: 0 0 auto;
+}
+
+.count {
+  color: var(--ink-mute);
+}
+
+.track {
+  position: relative;
+  flex: 1 1 auto;
+  /* 눈금이 설 자리. 선 자체는 가운데를 지난다. */
+  height: 12px;
+  /* 표식이 양 끝에서 반쯤 잘리지 않도록 안쪽으로 들인다. */
+  margin: 0 1px;
+}
+
+.line {
+  position: absolute;
+  inset: 50% 0 auto;
+  height: var(--rule-w);
+  background: var(--rule);
+}
+
+/* 구간 = 하루가 갈리는 자리. */
+.tick {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: var(--rule-w);
+  background: var(--rule-strong);
+}
+
+/*
+ * 지금 자리. 사진을 넘길 때마다 옮겨간다.
+ *
+ * 노선 페이지의 표식은 스크롤을 따라 계속 미끄러지므로 90ms로 붙어 있지만, 여기는
+ * 한 장씩 건너뛰는 자리라 화면 전환과 같은 박자로 움직이는 편이 덜 부산하다.
+ */
+.marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--at);
+  width: 2px;
+  background: var(--ink);
+  translate: -1px 0;
+  transition: left var(--t-base) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker {
+    transition: none;
+  }
+}
+
+/*
+ * 좁은 화면에서는 선을 버리고 글자만 남긴다. 200px짜리 레일에 눈금 넷을 박으면
+ * 구간이 갈린다는 사실만 남고 어디서 갈리는지는 안 보인다 — 그건 장식이다.
+ */
+@media (max-width: 520px) {
+  .track {
+    display: none;
+  }
+
+  .rail {
+    justify-content: space-between;
+    gap: var(--s-3);
+  }
+}

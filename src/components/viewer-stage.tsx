@@ -1,10 +1,11 @@
 import type { CSSProperties } from 'react'
-import type { Photo, Route } from '#content/types'
+import type { Photo } from '#content/types'
 import * as fmt from '@/lib/format'
 import { frameLabel } from '@/lib/grid'
-import { FRAME_TOTAL, frameNumber } from '@/lib/photos'
+import { FRAME_TOTAL, frameNumber, type Place } from '@/lib/photos'
 import { LiveFrame } from './live-frame'
 import { PhotoPicture } from './photo-picture'
+import { ViewerRail } from './viewer-rail'
 import styles from './viewer-stage.module.css'
 
 function Fact({ label, value }: { label: string; value: string | null }) {
@@ -25,12 +26,16 @@ function Fact({ label, value }: { label: string; value: string | null }) {
  */
 export function ViewerStage({
   photo,
-  route,
+  place,
   previous,
   next,
 }: {
   photo: Photo
-  route: Route | undefined
+  /**
+   * 앞뒤 링크가 도는 수열에서의 자리. 아래 `Frame` 줄의 카탈로그 번호와는 다른 것이고,
+   * 노선 이름도 여기서 나온다.
+   */
+  place: Place | undefined
   previous: Photo | undefined
   next: Photo | undefined
 }) {
@@ -77,7 +82,7 @@ export function ViewerStage({
           <Fact label="Exposure" value={fmt.exposureLine(photo.exif)} />
           <Fact label="Coords" value={fmt.coords(photo.exif.gps)} />
           <Fact label="Pixels" value={`${photo.width} × ${photo.height}`} />
-          <Fact label="Route" value={route?.title ?? null} />
+          {/* 노선 이름은 바로 아래 레일이 말한다. 두 줄 걸러 같은 낱말을 두 번 쓸 이유가 없다. */}
         </dl>
 
         {/*
@@ -90,6 +95,13 @@ export function ViewerStage({
           이 페이지는 공유 링크로 열리는 자리다. 여기서 이동한 결과도 공유 가능한
           전체 페이지여야 하므로, 문서 이동이 의미상으로도 맞다.
         */}
+        {/*
+          앞뒤 링크 바로 위. `Frame 002 / 068`은 위 촬영정보에 그대로 있는데 그건 카탈로그
+          번호이고, 아래 링크가 도는 건 노선이다. 둘을 붙여놓으면 "68장 중 2번째"와
+          "End →"가 나란히 서서 서로를 부정한다 — 실제로 그랬다.
+        */}
+        <ViewerRail place={place} />
+
         <nav className={styles.moves} aria-label="Sequence">
           {previous ? (
             <a href={`/p/${previous.slug}`} rel="prev">

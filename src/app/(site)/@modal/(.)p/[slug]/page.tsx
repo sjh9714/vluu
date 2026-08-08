@@ -1,6 +1,13 @@
 import { notFound } from 'next/navigation'
 import { PhotoModal } from '@/components/photo-modal'
-import { FRAME_TOTAL, PHOTO_LIST, frameNumber, getNeighbours, getPhoto } from '@/lib/photos'
+import {
+  FRAME_TOTAL,
+  PHOTO_LIST,
+  frameNumber,
+  getNeighbours,
+  getPhoto,
+  placeInRoute,
+} from '@/lib/photos'
 
 /**
  * `/p/[slug]`를 가로채 인덱스 위에 겹쳐 연다.
@@ -31,6 +38,7 @@ export default async function InterceptedPhoto({
       photo={photo}
       number={frameNumber(photo.slug)}
       total={FRAME_TOTAL}
+      place={placeInRoute(photo.slug)}
       previous={previous}
       next={next}
     />

@@ -97,6 +97,38 @@ export function getRouteOf(slug: string): Route | undefined {
 }
 
 /**
+ * 뷰어가 "지금 어디쯤"이라고 말할 때 필요한 것 전부.
+ *
+ * **`getNeighbours`와 같은 수열을 봐야 한다.** 한동안 뷰어는 카탈로그 번호로
+ * `002 / 068`을 띄우면서 화살표는 노선 안에서만 돌았고, 그래서 강화의 두 번째
+ * 사진에서 "66장 남음"과 "End →"가 한 화면에 있었다. 자리를 말하는 건 이쪽이고,
+ * 카탈로그 번호(`frameNumber`)는 자리가 아니라 이 프레임의 이름이다.
+ */
+export interface Place {
+  readonly route: Route
+  /** 노선에서 몇 번째인지. 1부터. */
+  readonly at: number
+  readonly of: number
+  /** 구간(=하루)마다 몇 장인지. 레일 눈금이 여기서 나온다. */
+  readonly legCounts: readonly number[]
+}
+
+export function placeInRoute(slug: string): Place | undefined {
+  const route = getRouteOf(slug)
+  if (!route) return undefined
+
+  const at = route.photos.findIndex((p) => p.slug === slug) + 1
+  if (at === 0) return undefined
+
+  return {
+    route,
+    at,
+    of: route.photos.length,
+    legCounts: route.legs.map((leg) => leg.photos.length),
+  }
+}
+
+/**
  * 이 사진의 앞뒤. **노선 안에서만** 움직인다 — 전체 목록으로 넘기면
  * 여행이 끝나는 자리에서 다른 나라로 튀어버린다.
  */

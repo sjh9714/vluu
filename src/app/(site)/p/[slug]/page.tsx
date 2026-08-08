@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { PageTransition } from '@/components/page-transition'
 import { ViewerStage } from '@/components/viewer-stage'
-import { PHOTO_LIST, getNeighbours, getPhoto } from '@/lib/photos'
+import { PHOTO_LIST, getNeighbours, getPhoto, placeInRoute } from '@/lib/photos'
 
 export function generateStaticParams() {
   return PHOTO_LIST.map((photo) => ({ slug: photo.slug }))
@@ -34,7 +34,12 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
       <SiteHeader current={route?.slug} />
       <PageTransition>
       <main>
-        <ViewerStage photo={photo} route={route} previous={previous} next={next} />
+        <ViewerStage
+          photo={photo}
+          place={placeInRoute(photo.slug)}
+          previous={previous}
+          next={next}
+        />
       </main>
         </PageTransition>
     </>

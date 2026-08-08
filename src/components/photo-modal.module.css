@@ -53,8 +53,18 @@
 }
 
 /* ── 사진 ───────────────────────────────────────────────── */
+/*
+ * `minmax(0, 1fr)`이 여기서 하는 일이 전부다.
+ *
+ * 이 줄이 없으면 안쪽 격자의 행이 **암시적 auto 행**이 되고, 그 높이는 레이아웃 중에
+ * 불확정이다. 그러면 `.box`의 `height: 100%`가 조용히 `auto`로 떨어지고, 비율만 남아
+ * 상자 크기가 창 높이와 무관하게 굳는다 — 1440×900에서 768px로 고정된 채,
+ * 창을 600으로 줄이면 사진이 329px만큼 캡션 위로 넘쳐 글자를 덮었다.
+ * 행을 확정해주면 퍼센트가 풀리고 사진이 남은 자리에 맞춰 줄어든다.
+ */
 .plate {
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
   min-height: 0;
 }
@@ -146,13 +156,21 @@
 }
 
 /* ── 캡션 ───────────────────────────────────────────────── */
+/*
+ * 경계선은 블록이 갖는다. 캡션에 걸어두면 레일이 그 위로 올라가 사진과 글자 사이에
+ * 떠 있게 되고, 레일 자신의 선까지 나란한 헤어라인 두 줄이 된다.
+ */
+.info {
+  padding-top: var(--s-4);
+  border-top: var(--rule-w) solid var(--rule);
+}
+
 .caption {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--s-2) var(--s-4);
-  padding-top: var(--s-4);
-  border-top: var(--rule-w) solid var(--rule);
+  margin-top: var(--s-3);
   font-family: var(--face-mono);
   font-size: var(--t-micro);
   letter-spacing: 0.02em;
