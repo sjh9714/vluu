@@ -353,7 +353,11 @@ under load    0.0078 – 0.0208   (2.7×)`}
             the route strip, where travelling sideways <em>is</em> the subject. On the index the motion
             belongs to your hand: the photograph under the cursor takes its velocity from yours, settles
             three pixels into its own frame, and leans up to three pixels after you — bounded by
-            construction, so it can never cross the hairline the DOM drew around it.
+            construction, so it can never cross the hairline the DOM drew around it. It stops at the
+            edge of the viewer. Open a photograph full size and it holds perfectly still; three pixels
+            of lean is a suggestion in a thumbnail and an unsteady picture once it fills the screen.
+            Measured, moving the cursor across an opened frame was driving it at half the velocity a
+            real scroll produces. Browsing and looking are different jobs.
           </p>
           <p>
             The blur that rides on that velocity was wrong twice before it was right. The first pass

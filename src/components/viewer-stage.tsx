@@ -39,6 +39,8 @@ export function ViewerStage({
   return (
     <div
       className={styles.stage}
+      // 모달과 같은 이유로 여기서도 사진은 가만히 있는다.
+      data-gl-still=""
       style={{ '--frame-lqip': `url("${photo.lqip}")` } as CSSProperties}
     >
       <div className={styles.plate}>

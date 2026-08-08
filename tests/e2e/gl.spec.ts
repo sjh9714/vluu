@@ -197,6 +197,57 @@ test.describe('WebGL 레이어', () => {
       .toBe(0)
   })
 
+  /**
+   * 크게 본 사진은 가만히 있어야 한다.
+   *
+   * 인덱스에서 3px 밀리고 살짝 번지는 건 은근하지만, 화면을 채운 사진에서는 그게
+   * 통째로 보인다. 고치기 전 실측: 커서를 가로지르면 속도 0.0206 —
+   * 실제 스크롤 최대치(0.04)의 절반이 사진 한 장에 걸리고 있었다.
+   */
+  for (const [where, open] of [
+    ['모달', async (page: import('@playwright/test').Page) => {
+      await page.goto('/')
+      await page.locator('[data-photo]').first().click()
+      await expect(page.getByRole('dialog')).toBeVisible()
+    }],
+    ['뷰어', async (page: import('@playwright/test').Page) => {
+      await page.goto('/p/two-lamps')
+    }],
+  ] as const) {
+    test(`${where}에서는 커서를 움직여도 사진이 흔들리지 않는다`, async ({ page }) => {
+      await open(page)
+      await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
+      await page.waitForTimeout(700)
+
+      const box = (await page.locator('[data-photo]').first().boundingBox())!
+
+      // 페이지 안에서 최대치를 잡는다. 밖에서 폴링하면 왕복 사이에 감쇠가 끝난다.
+      await page.evaluate(() => {
+        const state = { peak: 0 }
+        ;(window as unknown as { __still: typeof state }).__still = state
+        const tick = () => {
+          const v = window.__vluuGl?.inspect().velocity ?? [0, 0]
+          state.peak = Math.max(state.peak, Math.hypot(v[0], v[1]))
+          requestAnimationFrame(tick)
+        }
+        requestAnimationFrame(tick)
+      })
+
+      // 크게 본 사진을 들여다볼 때 사람이 하는 그 동작.
+      await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2)
+      await page.waitForTimeout(200)
+      await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2, { steps: 14 })
+      await page.waitForTimeout(150)
+
+      expect(
+        await page.evaluate(
+          () => (window as unknown as { __still: { peak: number } }).__still.peak,
+        ),
+        `${where}에서 사진이 커서를 따라 움직인다`,
+      ).toBe(0)
+    })
+  }
+
   test('손가락은 호버가 아니다', async ({ page }) => {
     await page.goto('/')
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)

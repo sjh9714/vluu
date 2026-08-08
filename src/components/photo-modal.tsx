@@ -208,6 +208,11 @@ export function PhotoModal({
         aria-label={photo.title}
         tabIndex={-1}
         data-overlay=""
+        /*
+         * 여기는 들여다보는 자리다. 커서를 움직일 때마다 사진이 밀리고 번지면
+         * 인덱스에서는 은근하던 것이 화면을 채운 사진에서는 통째로 보인다.
+         */
+        data-gl-still=""
         style={{ '--frame-lqip': `url("${photo.lqip}")` } as CSSProperties}
       >
         <div className={styles.plate}>
