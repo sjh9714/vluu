@@ -5,6 +5,7 @@ import type { Photo } from '#content/types'
 import { PipelineLadder, type Rung } from '@/components/pipeline-ladder'
 import { ShaderPlayground } from '@/components/shader-playground'
 import { SiteHeader } from '@/components/site-header'
+import { PageTransition } from '@/components/page-transition'
 import { PHOTO_LIST, ROUTE_LIST, getPhoto } from '@/lib/photos'
 import styles from './colophon.module.css'
 
@@ -97,6 +98,7 @@ export default async function ColophonPage() {
   return (
     <>
       <SiteHeader current="colophon" />
+      <PageTransition>
       <main className={styles.page}>
         <div className={styles.lede}>
           <h1>Colophon</h1>
@@ -547,6 +549,7 @@ under load    0.0078 – 0.0208   (2.7×)`}
           <span>Shot on iPhone 15 Pro</span>
         </p>
       </main>
+        </PageTransition>
     </>
   )
 }

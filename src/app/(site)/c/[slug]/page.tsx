@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
+import { PageTransition } from '@/components/page-transition'
 import { TransitStrip } from '@/components/transit-strip'
 import { ROUTE_LIST, getRoute } from '@/lib/photos'
 
@@ -25,9 +26,11 @@ export default async function RoutePage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <SiteHeader current={route.slug} />
+      <PageTransition>
       <main>
         <TransitStrip route={route} />
       </main>
+        </PageTransition>
     </>
   )
 }

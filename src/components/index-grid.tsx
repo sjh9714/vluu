@@ -35,7 +35,7 @@ export function IndexGrid({ routes }: { routes: readonly Route[] }) {
           */}
           <div className={styles.routeHead}>
             <h2>
-              <Link href={`/c/${route.slug}`} className={styles.routeLink}>
+              <Link href={`/c/${route.slug}`} className={styles.routeLink} transitionTypes={['nav-forward']}>
                 {route.title}
               </Link>
             </h2>
@@ -63,6 +63,11 @@ export function IndexGrid({ routes }: { routes: readonly Route[] }) {
                       sizes={gridSizes()}
                       number={number}
                       priority={number !== undefined && number <= EAGER_UNTIL}
+                      /*
+                       * 화면에 들어올 때 앉는다. 첫 화면 프레임은 시작할 때 이미
+                       * 범위를 지나쳐 있어 최종 상태다 — LCP를 건드리지 않는다.
+                       */
+                      className="vluu-arrive"
                     />
                   )
                 })}

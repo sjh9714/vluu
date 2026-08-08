@@ -205,3 +205,123 @@ html:not([data-opened]) .vluu-open-2 {
 html:not([data-opened]) .vluu-open-3 {
   animation: vluu-settle 380ms var(--ease) 320ms both;
 }
+
+/*
+ * ── 화면에 들어올 때 앉는다 ────────────────────────────────
+ *
+ * `animation-timeline: view()` — 프레임이 시야에 들어오는 동안 진행되는 애니메이션이다.
+ * 스크롤 위치가 곧 재생 시각이라 **컴포지터에서 돌고 JS가 0줄이다.**
+ *
+ * 이게 중요한 이유가 있다. 이 사이트에서 걷어낸 모션은 전부 메인 스레드의 rAF가
+ * 컴포지터가 굴리는 스크롤을 쫓아가려다 진 것들이었다. 여기서는 쫓아갈 일이 없다 —
+ * 애니메이션 자체가 스크롤에 묶여 있다.
+ *
+ * **첫 화면은 대상이 아니다.** `animation-range`가 화면 아래(`entry 0%`)에서 시작하므로,
+ * 처음부터 보이던 프레임은 이미 범위를 지나쳐 최종 상태다. LCP가 빠른 건 첫 화면 사진이
+ * 곧바로 칠해지기 때문이고 거기에 페이드를 걸면 그 숫자가 무너진다.
+ *
+ * 값은 작다 — 12px과 opacity. 여긴 정돈된 아카이브이고 등장은 한 번 일어나고 마는 일이다.
+ */
+@keyframes vluu-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .vluu-arrive {
+      animation: vluu-arrive linear both;
+      animation-timeline: view();
+      /*
+       * 아래에서 올라와 화면 하단 15% 지점에 닿으면 끝난다. 다시 위로 나갈 때는
+       * 되감기지 않는다 — `both`가 끝 상태를 붙들고, 범위를 지난 뒤엔 그대로다.
+       */
+      animation-range: entry 0% cover 15%;
+    }
+  }
+}
+
+/*
+ * ── 화면을 옮길 때의 방향 ─────────────────────────────────
+ *
+ * 앞으로 가면 옛 화면이 왼쪽으로 나가고 새 화면이 오른쪽에서 들어온다. 돌아오면 반대다.
+ * 영화와 애니메이션이 쓰는 관습 그대로라 설명이 필요 없다.
+ *
+ * `::view-transition-*`은 브라우저가 전환 중에만 만드는 가짜 엘리먼트다. 스냅샷을
+ * 움직이는 것이므로 레이아웃이 다시 계산되지 않고, 전부 컴포지터에서 돈다.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* 기본 크로스페이드를 끈다. 방향이 있는 전환에서는 겹쳐 흐려지는 게 방해가 된다. */
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes vluu-slide-out-left {
+  to {
+    transform: translateX(-3%);
+    opacity: 0;
+  }
+}
+@keyframes vluu-slide-in-right {
+  from {
+    transform: translateX(3%);
+    opacity: 0;
+  }
+}
+@keyframes vluu-slide-out-right {
+  to {
+    transform: translateX(3%);
+    opacity: 0;
+  }
+}
+@keyframes vluu-slide-in-left {
+  from {
+    transform: translateX(-3%);
+    opacity: 0;
+  }
+}
+
+/*
+ * 3%다. 화면 전체가 크게 미끄러지면 사진을 보러 온 사람에게는 그게 전환이 아니라
+ * 방해가 된다 — 방향만 읽히면 충분하다.
+ */
+::view-transition-old(.nav-forward) {
+  animation: vluu-slide-out-left 280ms var(--ease) both;
+}
+::view-transition-new(.nav-forward) {
+  animation: vluu-slide-in-right 320ms var(--ease) both;
+}
+::view-transition-old(.nav-back) {
+  animation: vluu-slide-out-right 280ms var(--ease) both;
+}
+::view-transition-new(.nav-back) {
+  animation: vluu-slide-in-left 320ms var(--ease) both;
+}
+
+/*
+ * 헤더는 움직이지 않는다.
+ *
+ * Next 문서가 명시하는 규칙이다 — 같이 미끄러지면 사람이 붙잡을 기준점이 사라져서,
+ * "내용이 바뀌었다"가 아니라 "화면 전체가 흔들렸다"로 읽힌다.
+ */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

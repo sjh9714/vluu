@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
+import { PageTransition } from '@/components/page-transition'
 import { ViewerStage } from '@/components/viewer-stage'
 import { PHOTO_LIST, getNeighbours, getPhoto } from '@/lib/photos'
 
@@ -31,9 +32,11 @@ export default async function PhotoPage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <SiteHeader current={route?.slug} />
+      <PageTransition>
       <main>
         <ViewerStage photo={photo} route={route} previous={previous} next={next} />
       </main>
+        </PageTransition>
     </>
   )
 }

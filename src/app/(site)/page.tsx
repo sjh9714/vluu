@@ -1,6 +1,7 @@
 import { IndexGrid } from '@/components/index-grid'
 import { Opening } from '@/components/opening'
 import { SiteHeader } from '@/components/site-header'
+import { PageTransition } from '@/components/page-transition'
 import { FRAME_TOTAL, ROUTE_LIST } from '@/lib/photos'
 import styles from '@/components/index-grid.module.css'
 
@@ -9,6 +10,7 @@ export default function IndexPage() {
     <>
       <Opening />
       <SiteHeader current="index" />
+      <PageTransition>
       <main className={styles.index}>
         {/*
           한 줄이면 된다. 여기 있던 문단은 사진 얘기가 아니라 정렬 규칙을 변호하는 말이었다 —
@@ -23,6 +25,7 @@ export default function IndexPage() {
         </div>
         <IndexGrid routes={ROUTE_LIST} />
       </main>
+        </PageTransition>
     </>
   )
 }

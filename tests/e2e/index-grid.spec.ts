@@ -40,6 +40,11 @@ test('한 행의 프레임은 같은 높이에서 시작한다', async ({ page }
    *
    * 세로 밀림이 있으면 칸마다 top이 달라져 행 하나에 한 칸씩 들어가고,
    * "마지막을 뺀 모든 행이 꽉 차 있다"는 조건이 곧바로 깨진다.
+   *
+   * **`offsetTop`으로 잰다.** 여기서 보려는 건 그리드가 잡아준 **레이아웃**이지
+   * 지금 화면에 그려진 자리가 아니다. `getBoundingClientRect()`는 transform을
+   * 반영하는데, 스크롤 등장 애니메이션이 아직 안 끝난 칸은 12px 내려가 있어서
+   * 같은 행이 두 무리로 쪼개진다 — 정렬은 멀쩡한데 테스트만 깨진다.
    */
   const sheets = await page.evaluate(() => {
     const bySheet = new Map<Element, number[]>()
@@ -47,7 +52,7 @@ test('한 행의 프레임은 같은 높이에서 시작한다', async ({ page }
       // 사진은 래퍼 안에 있고 구분 카드는 그 자체가 칸이다.
       const cell = el.hasAttribute('data-leg-mark') ? el : el.parentElement!
       const sheet = cell.parentElement!
-      const top = Math.round(cell.getBoundingClientRect().top + window.scrollY)
+      const top = (cell as HTMLElement).offsetTop
       bySheet.set(sheet, [...(bySheet.get(sheet) ?? []), top])
     }
     return [...bySheet.values()].map((tops) => {
@@ -76,9 +81,10 @@ test('빈 칸이 거의 없다 — 구분 카드가 그리드를 끊지 않는�
   await page.goto('/')
 
   const { cells, rows, columns } = await page.evaluate(() => {
+    // 위와 같은 이유로 offsetTop이다 — 레이아웃을 보는 것이지 그려진 자리를 보는 게 아니다.
     const tops = [...document.querySelectorAll('[data-photo], [data-leg-mark]')].map((el) => {
-      const cell = el.hasAttribute('data-leg-mark') ? el : el.parentElement!
-      return Math.round(cell.getBoundingClientRect().top + window.scrollY)
+      const cell = (el.hasAttribute('data-leg-mark') ? el : el.parentElement!) as HTMLElement
+      return cell.offsetTop
     })
     const byTop = new Map<number, number>()
     for (const top of tops) byTop.set(top, (byTop.get(top) ?? 0) + 1)
