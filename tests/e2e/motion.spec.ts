@@ -46,37 +46,39 @@ test.describe('화면에 들어올 때 앉는다', () => {
      * LCP가 빠른 건 첫 화면 사진이 곧바로 칠해지기 때문이다. 거기에 페이드를 걸면
      * 그 숫자가 무너진다.
      *
-     * 지금 첫 화면을 차지하는 건 여는 한 장이다 — 등장 애니메이션의 대상이 아니어야 하고
-     * 어떤 애니메이션도 걸려 있으면 안 된다.
-     */
-    /*
-     * `<img>`가 아니라 **감싼 상자**를 본다. GL이 인계받으면 DOM 이미지는 일부러
-     * opacity 0이 되고 캔버스가 대신 그린다 — 거기를 재면 GL이 켜졌다는 이유로
-     * "사진이 흐리다"고 잘못 읽는다. 등장 애니메이션이 걸리는 자리도 이 상자다.
+     * 지금 첫 화면을 차지하는 건 흐르는 띠다. 띠 자체는 움직이지만 **사진 한 장 한 장은**
+     * 등장 애니메이션의 대상이 아니어야 하고 처음부터 다 보여야 한다. 움직임은
+     * `.track` 하나에만 걸려 있으므로 사진에서 재면 0이 나온다.
      */
     const hero = await page.evaluate(() => {
-      const frame = document.querySelector('[data-opening-frame] [data-photo]')!
-      const box = frame.parentElement!
+      const shot = document.querySelector<HTMLImageElement>('[data-banner] img')!
       return {
-        arrives: box.classList.contains('vluu-arrive'),
-        opacity: Number(getComputedStyle(box).opacity),
-        animations: box.getAnimations().length,
-        onFirstScreen: frame.getBoundingClientRect().top < window.innerHeight,
+        arrives: shot.closest('.vluu-arrive') !== null,
+        opacity: Number(getComputedStyle(shot).opacity),
+        animations: shot.getAnimations().length,
+        onFirstScreen: shot.getBoundingClientRect().top < window.innerHeight,
       }
     })
 
-    expect(hero.onFirstScreen, '여는 한 장이 첫 화면에 없다').toBe(true)
-    expect(hero.arrives, '여는 한 장에 등장 애니메이션이 걸렸다').toBe(false)
-    expect(hero.animations, '여는 한 장이 애니메이션 중이다').toBe(0)
+    expect(hero.onFirstScreen, '띠가 첫 화면에 없다').toBe(true)
+    expect(hero.arrives, '띠의 사진에 등장 애니메이션이 걸렸다').toBe(false)
+    expect(hero.animations, '띠의 사진 한 장이 따로 애니메이션 중이다').toBe(0)
     expect(hero.opacity).toBe(1)
 
-    // 화면에 이미 들어와 있는 격자 프레임이 있다면 그것도 최종 상태여야 한다.
+    /*
+     * 격자 프레임도 **다 들어와 있으면** 최종 상태여야 한다.
+     *
+     * 아래 끝에 걸친 프레임은 뺀다. `animation-range: entry 0% cover 15%`는 아직
+     * 들어오는 중인 프레임을 흐리게 두는 게 목적이고, 배너가 옛 여는 한 장보다 낮아
+     * 첫 줄이 접힌 자리에 걸친다 — 거기서 0.4가 나오는 건 규칙이 도는 증거다.
+     * 완전히 들어온 것만 보면 임의의 문턱값 없이 "다 왔으면 다 보인다"를 잰다.
+     */
     const visible = await page.evaluate(() =>
       [...document.querySelectorAll('.vluu-arrive')]
-        .filter((n) => n.getBoundingClientRect().top < window.innerHeight)
+        .filter((n) => n.getBoundingClientRect().bottom <= window.innerHeight)
         .map((n) => Number(getComputedStyle(n).opacity)),
     )
-    expect(visible.every((o) => o === 1), `첫 화면 프레임이 흐리다: ${visible}`).toBe(true)
+    expect(visible.every((o) => o === 1), `다 들어온 프레임이 흐리다: ${visible}`).toBe(true)
   })
 
   test('아래쪽 사진은 스크롤에 묶여 있다', async ({ page }) => {

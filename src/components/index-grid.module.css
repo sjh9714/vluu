@@ -16,7 +16,8 @@
 
 /* ── 인트로 ─────────────────────────────────────────────── */
 .intro {
-  padding: var(--s-8) var(--gutter) 0;
+  /* 배너 바로 아래다. 위 여백이 크면 띠와 제목이 따로 노는 것처럼 보인다. */
+  padding: var(--s-6) var(--gutter) 0;
   max-width: var(--measure);
 }
 

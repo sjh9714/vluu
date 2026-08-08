@@ -39,6 +39,8 @@ async function isComplete(photo: PhotoSource, dir: string): Promise<boolean> {
     ...photo.widths.map((w) => `${w}.avif`),
     ...photo.webpWidths.map((w) => `${w}.webp`),
     'og.jpg',
+    'banner-480.avif',
+    'banner-900.avif',
     ...(photo.live ? ['live.mp4'] : []),
   ]
   const there = await readdir(dir).catch(() => null)

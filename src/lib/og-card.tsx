@@ -116,8 +116,11 @@ export function renderCard({
       >
         {photo ? (
           /*
-           * 사진은 담는다(contain). 잘라내면 3:4 세로가 가로 카드에서 거의 다 날아가고,
-           * 무엇보다 이 사이트는 프레임을 자르지 않는 것이 규칙이다.
+           * 사진은 담는다(contain). 잘라내면 3:4 세로가 가로 카드에서 거의 다 날아간다.
+           *
+           * 이 사이트는 프레임을 자르지 않는 것이 규칙이고, 예외는 인덱스를 여는 띠
+           * 하나뿐이다 — 세로 사진으로 옆으로 흐르는 띠를 만들 수 없어서다. 여기는
+           * 그런 제약이 없으므로 규칙대로 간다.
            */
           <div style={{ display: 'flex', width: PHOTO_W, alignItems: 'center', flexShrink: 0 }}>
             <img

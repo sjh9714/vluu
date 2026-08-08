@@ -1,0 +1,123 @@
+/*
+ * 인덱스를 여는 띠.
+ *
+ * 전폭이다 — 거터를 무시하고 화면 끝에서 끝까지. 배너는 자리를 다 쓸 때 배너로 읽힌다.
+ */
+
+.banner {
+  position: relative;
+  overflow: hidden;
+  border-bottom: var(--rule-w) solid var(--rule);
+  /* 높이는 사진 높이가 정한다. 폭은 3:2에서 나온다. */
+  --shot-h: 320px;
+  --shot-w: calc(var(--shot-h) * 3 / 2);
+  --gap: var(--s-2);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  /*
+   * 목록 두 벌 중 첫 벌의 폭만큼 민다. 두 벌이 같으므로 -50%에서 시작점과
+   * 정확히 같은 그림이 되어 이음매가 안 보인다.
+   *
+   * `transform` 하나뿐이라 컴포지터에서 돈다 — 메인 스레드는 아무 일도 하지 않는다.
+   * 배너를 얹기 전후로 재보면 롱태스크 25ms → 26ms, LCP 204ms → 204ms, CLS 0으로 같다.
+   *
+   * (그 전에 headless + SwiftShader로 재서 553 → 1050ms처럼 보인 적이 있는데,
+   *  소프트웨어 래스터라이저가 CPU를 380% 먹는 위에서 잰 값이라 사이트가 아니라
+   *  측정 장비를 잰 숫자였다. 같은 조건을 두 번 재면 513ms와 1885ms가 나왔다.)
+   */
+  animation: vluu-banner 60s linear infinite;
+}
+
+@keyframes vluu-banner {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * 멈출 수단. 자동으로 5초 넘게 움직이는 내용에는 반드시 있어야 한다 (WCAG 2.2.2).
+ * 커서를 올리면 멈추고, 키보드로 들어와도 멈춘다 — 링크를 읽는 동안 흘러가면
+ * 누를 수가 없다.
+ */
+.banner:hover .track,
+.banner:focus-within .track {
+  animation-play-state: paused;
+}
+
+.run {
+  display: flex;
+  gap: var(--gap);
+  padding-right: var(--gap);
+  list-style: none;
+}
+
+.item {
+  flex: 0 0 auto;
+  width: var(--shot-w);
+}
+
+.link {
+  display: block;
+  position: relative;
+  outline-offset: -3px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: var(--shot-h);
+  /*
+   * 이미 3:2로 잘라 구웠다. `cover`는 반올림 오차로 생기는 1px 틈을 막는 안전장치이고
+   * 실제로 잘라낼 픽셀은 없다.
+   */
+  object-fit: cover;
+  background: var(--paper-raise);
+}
+
+/* 화이트 큐브에는 그림자가 없다. 누를 수 있다는 표시는 헤어라인으로만. */
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--rule-w) solid transparent;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.link:hover::after {
+  border-color: var(--ink);
+}
+
+/*
+ * 한 바퀴 60초를 고정한다. 사진 크기가 breakpoint마다 달라지므로 속도는 조금씩
+ * 달라지는데(넓은 화면 72px/s, 좁은 화면 40px/s), 좁을수록 천천히 도는 건
+ * 볼 게 적을수록 차분하다는 뜻이라 그대로 둔다.
+ */
+@media (max-width: 900px) {
+  .banner {
+    --shot-h: 240px;
+  }
+}
+
+@media (max-width: 600px) {
+  .banner {
+    --shot-h: 180px;
+  }
+}
+
+/*
+ * 모션을 끈 사람에게는 흐르지 않는다. 대신 띠 자체를 옆으로 굴릴 수 있게 둔다 —
+ * 멈춰 있다고 아홉 장 중 세 장만 볼 수 있으면 그건 내용을 잃는 것이다.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+
+  .banner {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}

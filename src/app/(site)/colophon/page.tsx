@@ -492,6 +492,19 @@ under load    0.0078 – 0.0208   (2.7×)`}
             straight edge to distort.
           </p>
           <p>
+            <strong>The banner is the one place a frame gets cropped.</strong> Everywhere else a
+            photograph is shown whole; the opening strip cannot be, because sixty-eight vertical
+            frames will not flow sideways. So the question was only how much to cut. The first
+            instinct was 3:1, and measuring it settled the matter: four across a 1440-pixel screen
+            leaves a 120-pixel band, which is decoration rather than a banner, and it throws away
+            three-quarters of every frame to arrive at a shape no camera has ever produced — the eye
+            reads it as a fragment immediately. 3:2 keeps half, stands 320 pixels tall, and is the
+            ratio of 35mm film, so it reads as a photograph instead of an offcut. The crops are baked
+            at ingest by content, not by centring, because a centred cut will decapitate somebody
+            sooner or later. What flows is one frame per day, first of each leg — a rule, like the
+            sequence, rather than a favourite.
+          </p>
+          <p>
             <strong>The route plot is a real map, baked at build time.</strong> Sixty-seven of
             sixty-eight frames carry coordinates, so the routes can be drawn from the photographs
             themselves. The first version drew only that — points, lines, a scale bar, no basemap —

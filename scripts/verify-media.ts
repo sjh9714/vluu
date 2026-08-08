@@ -17,6 +17,7 @@ import { PHOTO_META } from '../content/photos.meta'
 import { ROUTES } from '../content/routes'
 import { ROUTE_LIST } from '../src/lib/photos'
 import { plotCells } from '../src/lib/plot-cells'
+import { BANNER_WIDTHS } from '../src/lib/banner'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MEDIA_DIR = path.join(ROOT, 'public', 'media')
@@ -61,6 +62,15 @@ for (const photo of PHOTOS) {
    * 빌드만 터진다 — 매니페스트에 없는 파일이라 여기서 대신 지켜본다.
    */
   if (!(await exists(path.join(dir, 'og.jpg')))) note(`카드용 JPEG 없음: ${photo.key}/og.jpg`)
+  /*
+   * 인덱스 배너용 가로 크롭. 이것도 매니페스트에 없는 파일이라 여기서 대신 지켜본다.
+   * 없으면 띠에 빈 칸이 흐르고, 화면에서 알아채기 전에 이 검사가 잡는다.
+   */
+  for (const w of BANNER_WIDTHS) {
+    if (!(await exists(path.join(dir, `banner-${w}.avif`)))) {
+      note(`배너 크롭 없음: ${photo.key}/banner-${w}.avif`)
+    }
+  }
   if (photo.widths.some((w) => w > photo.width)) {
     note(`${photo.key}: 원본(${photo.width}px)보다 큰 파생물을 만들었다`)
   }

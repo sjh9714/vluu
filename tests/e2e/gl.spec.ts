@@ -295,14 +295,18 @@ test.describe('WebGL 레이어', () => {
      * 예산은 24장이고, 되돌리는 데 쓸 LQIP를 그때 받아오므로 몇 프레임 늦게 수렴한다.
      */
     /*
-     * 텍스처는 **사진마다** 하나다. 여는 한 장이 격자의 마지막 장과 같은 사진이라
-     * 추적 대상은 69개인데 텍스처는 68개다 — 풀이 키로 공유하는 게 맞는 동작이다.
+     * 텍스처는 엘리먼트마다가 아니라 **사진마다** 하나다. 풀이 키로 공유한다.
+     *
+     * 한때 여는 한 장이 격자의 마지막 장과 같은 사진이어서 추적 69 · 텍스처 68로
+     * 공유가 눈에 보였다. 지금 인덱스를 여는 건 띠이고 띠의 사진은 일부러
+     * `[data-photo]`가 아니므로(GL이 흐름을 속도로 읽는다) 둘은 다시 같은 수다.
+     * 같아졌다고 공유가 사라진 건 아니라서, 셈이 어긋나지 않는지만 본다.
      */
     const unique = await page.evaluate(
       () => new Set([...document.querySelectorAll('[data-photo]')].map((n) => (n as HTMLElement).dataset['photo'])).size,
     )
     const frames = await page.locator('[data-photo]').count()
-    expect(frames, '여는 한 장이 격자와 겹치지 않으면 이 테스트의 전제가 사라진다').toBeGreaterThan(unique)
+    expect(frames, '같은 사진이 여러 번 추적되면 텍스처는 그보다 적어야 한다').toBeGreaterThanOrEqual(unique)
     expect(await page.evaluate(() => window.__vluuGl!.inspect().textures)).toBe(unique)
     await expect
       .poll(() => page.evaluate(() => window.__vluuGl!.inspect().promoted), { timeout: 5000 })

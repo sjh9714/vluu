@@ -32,6 +32,27 @@ const WEBP_WIDTHS = new Set<number>([640, 1280])
 const OG_WIDTH = 640
 
 /**
+ * 인덱스 상단의 흐르는 배너에 쓰는 가로 크롭.
+ *
+ * **이 사이트는 원래 프레임을 자르지 않는다.** 여기서만 깬다 — 세로 사진이 옆으로
+ * 흘러가는 띠는 만들 수 없기 때문이다. 3:2는 35mm 필름의 비율이라 잘린 조각이 아니라
+ * 사진으로 읽힌다. 3:1까지 가면 어떤 사진기도 만들지 않는 모양이라 눈이 곧바로
+ * "잘렸다"고 알고, 원본의 75%를 버리게 된다. 3:2는 절반을 남긴다.
+ *
+ * 잘라서 굽는 이유: CSS로 덮으면 480px 자리에 1280 세로본(165KB)을 받아 절반을
+ * 버린다. 아홉 장이면 1.5MB가 접힌 화면 위에 얹힌다. 보여줄 픽셀만 인코딩한다.
+ *
+ * `position: 'attention'` — 가운데를 기계적으로 자르면 피사체가 프레임 밖으로 나가는
+ * 장이 반드시 생긴다. sharp가 내용을 보고 자를 자리를 고른다.
+ */
+/*
+ * 두 폭을 굽는다. 띠에서 사진이 차지하는 자리는 480 CSS px이고, 보통 화면(dpr 1)은
+ * 480이면 충분한데 한 폭만 두면 900을 받아 절반을 버린다 — 아홉 장이면 456KB가
+ * 250KB가 될 수 있는 차이다. 레티나(dpr 2)는 900을 고른다.
+ */
+const BANNER = { widths: [480, 900], ratio: 3 / 2 }
+
+/**
  * sharp는 아이폰 HEIC를 직접 못 읽는다.
  * libvips에 heif 입력이 있긴 한데, Live Photo HEIC는 iref 참조가 45개라
  * libheif의 기본 보안 한도(16)에 걸려 "corrupt header"로 거절당한다.
@@ -92,6 +113,21 @@ export async function deriveImage(
         jobs.push(resized.clone().webp({ quality: 68, effort: 5 }).toFile(path.join(outDir, `${w}.webp`)))
       }
       await Promise.all(jobs)
+    }
+
+    // 인덱스 배너용 가로 크롭. 이 사이트에서 프레임을 자르는 유일한 자리다.
+    for (const w of BANNER.widths) {
+      await upright
+        .clone()
+        .resize({
+          width: w,
+          height: Math.round(w / BANNER.ratio),
+          fit: 'cover',
+          position: 'attention',
+          withoutEnlargement: true,
+        })
+        .avif({ quality: 52, effort: 6 })
+        .toFile(path.join(outDir, `banner-${w}.avif`))
     }
 
     // 링크 미리보기 카드용. 화면에는 절대 나가지 않는다 — 빌드 때 카드에 얹히고 끝이다.
