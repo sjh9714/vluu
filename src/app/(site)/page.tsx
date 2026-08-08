@@ -1,27 +1,28 @@
 import { IndexGrid } from '@/components/index-grid'
 import { Opening } from '@/components/opening'
+import { OpeningFrame } from '@/components/opening-frame'
 import { SiteHeader } from '@/components/site-header'
 import { PageTransition } from '@/components/page-transition'
-import { FRAME_TOTAL, ROUTE_LIST } from '@/lib/photos'
+import { FRAME_TOTAL, PHOTO_LIST, ROUTE_LIST, frameNumber } from '@/lib/photos'
 import styles from '@/components/index-grid.module.css'
 
 export default function IndexPage() {
+  /*
+   * 가장 최근에 찍은 한 장으로 연다. 고르는 게 아니라 규칙이라, 사진이 늘면
+   * 저절로 바뀌고 이 자리가 "대표작"이 되지 않는다.
+   */
+  const latest = PHOTO_LIST.at(-1)
+
   return (
     <>
       <Opening />
       <SiteHeader current="index" />
       <PageTransition>
       <main className={styles.index}>
-        {/*
-          한 줄이면 된다. 여기 있던 문단은 사진 얘기가 아니라 정렬 규칙을 변호하는 말이었다 —
-          "무엇도 순위를 매기지 않았고 무엇도 내세우지 않았다" 같은 것. 보러 온 사람이
-          묻지 않은 것에 답하고 있었다.
-        */}
-        <div className={`${styles.intro} vluu-open-3`}>
-          <h1>The whole catalogue</h1>
-          <p>
-            {FRAME_TOTAL} frames from {ROUTE_LIST.length} trips, oldest first.
-          </p>
+        <div className="vluu-open-3">
+          {latest ? (
+            <OpeningFrame photo={latest} number={frameNumber(latest.slug)} total={FRAME_TOTAL} />
+          ) : null}
         </div>
         <IndexGrid routes={ROUTE_LIST} />
       </main>

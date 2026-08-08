@@ -153,7 +153,14 @@ test.describe('WebGL 레이어', () => {
     await page.goto('/')
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
 
-    const frame = page.locator('[data-photo]').first()
+    /*
+     * Live가 **없는** 프레임을 고른다. Live인 프레임은 커서를 올리면 영상이 재생되고
+     * GL은 일부러 물러난다 — 그 사진의 모션은 이미 영상이 맡고 있다. 여기서 보려는 건
+     * 그게 아니라 GL의 커서 반응이다.
+     */
+    const frame = page.locator('[data-photo]:not(:has([data-live]))').first()
+    await frame.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(200)
     const box = (await frame.boundingBox())!
     const y = box.y + box.height / 2
 
@@ -287,11 +294,19 @@ test.describe('WebGL 레이어', () => {
      * 68장을 전부 GPU에 실제 이미지로 올리면 수백 MB다.
      * 예산은 24장이고, 되돌리는 데 쓸 LQIP를 그때 받아오므로 몇 프레임 늦게 수렴한다.
      */
+    /*
+     * 텍스처는 **사진마다** 하나다. 여는 한 장이 격자의 마지막 장과 같은 사진이라
+     * 추적 대상은 69개인데 텍스처는 68개다 — 풀이 키로 공유하는 게 맞는 동작이다.
+     */
+    const unique = await page.evaluate(
+      () => new Set([...document.querySelectorAll('[data-photo]')].map((n) => (n as HTMLElement).dataset['photo'])).size,
+    )
     const frames = await page.locator('[data-photo]').count()
-    expect(await page.evaluate(() => window.__vluuGl!.inspect().textures)).toBe(frames)
+    expect(frames, '여는 한 장이 격자와 겹치지 않으면 이 테스트의 전제가 사라진다').toBeGreaterThan(unique)
+    expect(await page.evaluate(() => window.__vluuGl!.inspect().textures)).toBe(unique)
     await expect
       .poll(() => page.evaluate(() => window.__vluuGl!.inspect().promoted), { timeout: 5000 })
-      .toBeLessThan(frames / 2)
+      .toBeLessThan(unique / 2)
   })
 
   test('강도를 0으로 내리면 왜곡이 사라진다', async ({ page }) => {

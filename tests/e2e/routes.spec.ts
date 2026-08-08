@@ -3,7 +3,7 @@ import { PHOTO_LIST, ROUTE_LIST } from '../../src/lib/photos'
 
 test('인덱스가 모든 프레임을 싣는다', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('[data-photo]')).toHaveCount(PHOTO_LIST.length)
+  await expect(page.locator('[data-sheet] [data-photo]')).toHaveCount(PHOTO_LIST.length)
 })
 
 test('레이아웃이 밀리지 않는다 — 모든 사진이 미리 자리를 잡는다', async ({ page }) => {

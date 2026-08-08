@@ -12,7 +12,7 @@ test.describe('화면 간 모프', () => {
     await page.goto('/')
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
 
-    const holder = page.locator('[data-photo]').first()
+    const holder = page.locator('[data-sheet] [data-photo]').first()
     const key = await holder.getAttribute('data-photo')
     await holder.click()
     await page.waitForURL(/\/p\//)
@@ -25,7 +25,7 @@ test.describe('화면 간 모프', () => {
     await page.goto('/')
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
 
-    await page.locator('[data-photo]').first().click()
+    await page.locator('[data-sheet] [data-photo]').first().click()
     await page.waitForURL(/\/p\//)
 
     await expect
@@ -41,7 +41,7 @@ test.describe('화면 간 모프', () => {
     const onIndex = await page.evaluate(() => window.__vluuGl!.inspect().textures)
     expect(onIndex, '인덱스에서 텍스처를 잡고 있어야 한다').toBeGreaterThan(1)
 
-    await page.locator('[data-photo]').first().click()
+    await page.locator('[data-sheet] [data-photo]').first().click()
     await page.waitForURL(/\/p\//)
     await page.waitForTimeout(400)
 
@@ -61,7 +61,7 @@ test.describe('화면 간 모프', () => {
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
     await page.waitForTimeout(900)
 
-    await page.locator('[data-photo]').first().click()
+    await page.locator('[data-sheet] [data-photo]').first().click()
     await page.waitForURL(/\/p\//)
 
     // 텍스처가 이미 GPU에 있으므로 인계가 즉시 일어난다. 새로 받아야 했다면 여기서 시간이 걸린다.
@@ -82,7 +82,12 @@ test.describe('화면 간 모프', () => {
      * 넣는데, 그 스크롤이 만든 진짜 속도가 감쇠하며 모프 구간까지 흘러들어온다.
      * 그러면 모프 탓이 아닌 값을 모프 탓으로 읽게 된다.
      */
-    const target = page.locator('[data-photo]').nth(1)
+    /*
+     * 여는 한 장이 첫 화면을 차지하면서 격자는 접힌 아래로 내려갔다. 먼저 화면에
+     * 들여놓고, 그 스크롤이 만든 속도가 완전히 멎기를 기다린 다음에 누른다.
+     */
+    const target = page.locator('[data-sheet] [data-photo]').nth(1)
+    await target.scrollIntoViewIfNeeded()
     await expect(target).toBeInViewport()
     await expect
       .poll(() => page.evaluate(() => Math.hypot(...window.__vluuGl!.inspect().velocity)))
@@ -113,7 +118,7 @@ test.describe('화면 간 모프', () => {
     await page.goto('/')
     await page.waitForTimeout(500)
 
-    await page.locator('[data-photo]').first().click()
+    await page.locator('[data-sheet] [data-photo]').first().click()
     await page.waitForURL(/\/p\//)
 
     // GL 자체가 켜지지 않으므로 모프도 없다. 화면은 그냥 바뀐다.
@@ -126,7 +131,7 @@ test.describe('화면 간 모프', () => {
     await expect.poll(() => page.evaluate(() => !!window.__vluuGl)).toBe(true)
 
     // 이 화면이 그대로 남는데 사진만 날아가면 전환이 아니라 오작동이다.
-    await page.locator('[data-photo]').first().click({ modifiers: ['Meta'] })
+    await page.locator('[data-sheet] [data-photo]').first().click({ modifiers: ['Meta'] })
     await page.waitForTimeout(300)
     expect(await page.evaluate(() => window.__vluuGl!.inspect().morphing)).toBeNull()
   })

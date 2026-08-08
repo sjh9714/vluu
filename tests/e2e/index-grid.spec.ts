@@ -13,7 +13,7 @@ import { PHOTO_LIST, ROUTE_LIST } from '../../src/lib/photos'
 /** 인덱스의 모든 프레임 박스 좌표. GL이 읽는 것과 같은 값이다. */
 async function frameBoxes(page: import('@playwright/test').Page) {
   return page.evaluate(() =>
-    [...document.querySelectorAll('[data-photo]')].map((el) => {
+    [...document.querySelectorAll('[data-sheet] [data-photo]')].map((el) => {
       const r = el.getBoundingClientRect()
       return { top: Math.round(r.top + window.scrollY), width: Math.round(r.width), height: Math.round(r.height) }
     }),
@@ -48,7 +48,7 @@ test('한 행의 프레임은 같은 높이에서 시작한다', async ({ page }
    */
   const sheets = await page.evaluate(() => {
     const bySheet = new Map<Element, number[]>()
-    for (const el of document.querySelectorAll('[data-photo], [data-leg-mark]')) {
+    for (const el of document.querySelectorAll('[data-sheet] [data-photo], [data-sheet] [data-leg-mark]')) {
       // 사진은 래퍼 안에 있고 구분 카드는 그 자체가 칸이다.
       const cell = el.hasAttribute('data-leg-mark') ? el : el.parentElement!
       const sheet = cell.parentElement!
@@ -82,7 +82,7 @@ test('빈 칸이 거의 없다 — 구분 카드가 그리드를 끊지 않는�
 
   const { cells, rows, columns } = await page.evaluate(() => {
     // 위와 같은 이유로 offsetTop이다 — 레이아웃을 보는 것이지 그려진 자리를 보는 게 아니다.
-    const tops = [...document.querySelectorAll('[data-photo], [data-leg-mark]')].map((el) => {
+    const tops = [...document.querySelectorAll('[data-sheet] [data-photo], [data-sheet] [data-leg-mark]')].map((el) => {
       const cell = (el.hasAttribute('data-leg-mark') ? el : el.parentElement!) as HTMLElement
       return cell.offsetTop
     })
@@ -102,7 +102,7 @@ test('빈 칸이 거의 없다 — 구분 카드가 그리드를 끊지 않는�
 test('캡션 높이가 전부 같다 — 제목 길이가 정렬을 깨지 않는다', async ({ page }) => {
   await page.goto('/')
   const heights = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-photo]')].map((el) =>
+    [...document.querySelectorAll('[data-sheet] [data-photo]')].map((el) =>
       Math.round(el.parentElement!.querySelector('p')!.getBoundingClientRect().height),
     ),
   )
@@ -132,7 +132,7 @@ test('노선과 구간이 섹션으로 나뉘고 개수가 맞는다', async ({ 
 test('카탈로그 번호가 001부터 순서대로 붙는다', async ({ page }) => {
   await page.goto('/')
   const numbers = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-photo]')].map(
+    [...document.querySelectorAll('[data-sheet] [data-photo]')].map(
       (el) => el.parentElement!.querySelector('p span span')!.textContent,
     ),
   )
@@ -145,7 +145,16 @@ test('고정된 노선 헤더가 사이트 헤더에 가리지 않는다', async
   test.skip(isMobile, '좁은 화면에서는 노선 헤더를 고정하지 않는다')
   await page.setViewportSize({ width: 1440, height: 800 })
   await page.goto('/')
-  await page.evaluate(() => window.scrollTo(0, 1200))
+
+  /*
+   * 고정 좌표로 굴리지 않는다. 여는 한 장이 들어오면서 1200px가 노선 안쪽이 아니라
+   * 엉뚱한 자리가 됐고, 그때 붙어 있는 헤더가 없어 테스트가 아무것도 못 찾았다.
+   * 노선 안으로 확실히 들어가는 자리를 실측해서 간다.
+   */
+  await page.evaluate(() => {
+    const section = [...document.querySelectorAll('h2')].at(-1)!.closest('section') as HTMLElement
+    window.scrollTo(0, section.offsetTop + 400)
+  })
   await page.waitForTimeout(200)
 
   /*

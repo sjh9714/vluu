@@ -42,7 +42,8 @@ export function IndexGrid({ routes }: { routes: readonly Route[] }) {
             <span className={styles.count}>{frames(route.photos.length)}</span>
           </div>
 
-          <div className={styles.sheet}>
+          {/* 격자의 손잡이. 여는 한 장은 격자 밖에 있으므로 둘을 구분할 수 있어야 한다. */}
+          <div className={styles.sheet} data-sheet="">
             {route.legs.map((leg) => (
               /* Fragment다 — display:contents 래퍼를 두면 그리드 칸들이 실제로는
                  한 겹 안쪽에 들어가고, DOM을 타고 올라가는 쪽이 전부 헷갈린다. */

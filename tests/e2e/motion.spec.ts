@@ -43,18 +43,40 @@ test.describe('화면에 들어올 때 앉는다', () => {
     await page.waitForTimeout(600)
 
     /*
-     * LCP가 빠른 건 첫 화면 사진이 곧바로 칠해지기 때문이다. 등장 애니메이션이
-     * 거기까지 걸리면 그 숫자가 무너진다 — `animation-range`가 화면 아래에서
-     * 시작하므로 처음부터 보이던 프레임은 이미 범위를 지나 최종 상태여야 한다.
+     * LCP가 빠른 건 첫 화면 사진이 곧바로 칠해지기 때문이다. 거기에 페이드를 걸면
+     * 그 숫자가 무너진다.
+     *
+     * 지금 첫 화면을 차지하는 건 여는 한 장이다 — 등장 애니메이션의 대상이 아니어야 하고
+     * 어떤 애니메이션도 걸려 있으면 안 된다.
      */
-    const first = await page.evaluate(() =>
+    /*
+     * `<img>`가 아니라 **감싼 상자**를 본다. GL이 인계받으면 DOM 이미지는 일부러
+     * opacity 0이 되고 캔버스가 대신 그린다 — 거기를 재면 GL이 켜졌다는 이유로
+     * "사진이 흐리다"고 잘못 읽는다. 등장 애니메이션이 걸리는 자리도 이 상자다.
+     */
+    const hero = await page.evaluate(() => {
+      const frame = document.querySelector('[data-opening-frame] [data-photo]')!
+      const box = frame.parentElement!
+      return {
+        arrives: box.classList.contains('vluu-arrive'),
+        opacity: Number(getComputedStyle(box).opacity),
+        animations: box.getAnimations().length,
+        onFirstScreen: frame.getBoundingClientRect().top < window.innerHeight,
+      }
+    })
+
+    expect(hero.onFirstScreen, '여는 한 장이 첫 화면에 없다').toBe(true)
+    expect(hero.arrives, '여는 한 장에 등장 애니메이션이 걸렸다').toBe(false)
+    expect(hero.animations, '여는 한 장이 애니메이션 중이다').toBe(0)
+    expect(hero.opacity).toBe(1)
+
+    // 화면에 이미 들어와 있는 격자 프레임이 있다면 그것도 최종 상태여야 한다.
+    const visible = await page.evaluate(() =>
       [...document.querySelectorAll('.vluu-arrive')]
         .filter((n) => n.getBoundingClientRect().top < window.innerHeight)
         .map((n) => Number(getComputedStyle(n).opacity)),
     )
-
-    expect(first.length, '첫 화면에 프레임이 없으면 이 테스트는 아무것도 안 본다').toBeGreaterThan(0)
-    expect(first.every((o) => o === 1), `첫 화면 사진이 흐리다: ${first}`).toBe(true)
+    expect(visible.every((o) => o === 1), `첫 화면 프레임이 흐리다: ${visible}`).toBe(true)
   })
 
   test('아래쪽 사진은 스크롤에 묶여 있다', async ({ page }) => {
